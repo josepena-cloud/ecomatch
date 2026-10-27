@@ -15,7 +15,7 @@
 <style>
 :root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--orange:#f39a48;--blue:#2563eb}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
-body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5}
+body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5;padding-bottom:70px}
 h1,h2,h3,.logo{font-family:"Space Grotesk",sans-serif}
 a{text-decoration:none;color:inherit}.container{max-width:1180px;margin:auto;padding:0 24px}
 
@@ -55,7 +55,13 @@ nav a:hover{color:var(--green)}
 .form-group{margin-bottom:15px}
 .form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:5px;color:var(--dark)}
 
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;height:65px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;z-index:999;box-shadow:0 -4px 15px rgba(0,0,0,0.05)}
+.mobile-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex:1;height:100%}
+.mobile-btn.active, .mobile-btn:hover{color:var(--green)}
+.mobile-btn span{font-size:20px;margin-bottom:2px}
+
 footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
+@media(min-width:851px){.mobile-nav{display:none}body{padding-bottom:0}}
 @media(max-width:850px){nav a:not(.btn){display:none}}
 </style>
 </head>
@@ -69,7 +75,6 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
     <a href="fletes.html">Modo Conductor 🚚</a>
     <a href="compra-venta.html" style="color:var(--green)">Compra/Venta</a>
     <a href="recetas.html">Emprendimientos</a>
-    <a class="btn btn-primary" href="index.html#escaner">Escanear Residuo</a>
   </nav>
 </div>
 </header>
@@ -147,7 +152,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
         </select>
       </div>
 
-      <!-- Desplegable Ciudades (Origen) -->
+      <!-- Desplegable Ciudades -->
       <div class="form-group">
         <label>Ciudad de Origen (Vendedor)</label>
         <select id="form-location" class="form-control" required>
@@ -164,13 +169,11 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
         </select>
       </div>
 
-      <!-- Solo Entrada Numérica -->
       <div class="form-group">
         <label>Volumen Disponible (kg)</label>
         <input type="number" min="1" step="1" id="form-volume" class="form-control" placeholder="Ej: 500" required>
       </div>
 
-      <!-- Solo Entrada Numérica / Decimal -->
       <div class="form-group">
         <label>Precio Solicitado por kg (USD)</label>
         <input type="number" min="0.01" step="0.01" id="form-price" class="form-control" placeholder="Ej: 0.85" required>
@@ -211,7 +214,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </div>
 
-<!-- Modal 3: Comprar Ahora Mismo (Pide Ciudad de Destino) -->
+<!-- Modal 3: Comprar Ahora Mismo -->
 <div class="modal" id="buy-modal">
   <div class="modal-content">
     <h3 style="margin-bottom:10px;color:var(--dark)">⚡ Comprar Ahora Mismo</h3>
@@ -224,7 +227,6 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
       <input type="hidden" id="buy-fruit-val">
       <input type="hidden" id="buy-location-val">
 
-      <!-- Selección Obligatoria de Ciudad de Destino -->
       <div class="form-group">
         <label>Selecciona tu Ciudad de Destino (Comprador)</label>
         <select id="buy-destination-city" class="form-control" required>
@@ -249,6 +251,13 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </div>
 
+<div class="mobile-nav">
+  <a href="index.html" class="mobile-btn"><span>📷</span>Escáner</a>
+  <a href="compra-venta.html" class="mobile-btn active"><span>🛒</span>Marketplace</a>
+  <a href="fletes.html" class="mobile-btn"><span>🚚</span>Fletes</a>
+  <a href="recetas.html" class="mobile-btn"><span>💡</span>Ideas</a>
+</div>
+
 <footer>
 <div class="container">
   <small>© 2026 EcoMatch. Plataforma de Revalorización Orgánica.</small>
@@ -256,7 +265,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 </footer>
 
 <script>
-// 1. Credenciales Reales de Firebase
+// 1. Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBBkkkzxL50ikszUxoieH3vImoY4WXFzao",
   authDomain: "ecomatch-b5e42.firebaseapp.com",
@@ -270,7 +279,22 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 2. Cargar Ofertas en Tiempo Real
+// 2. Autocompletado y Apertura Automática desde el Escáner (index.html)
+window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const fruta = urlParams.get('fruta');
+  const auto = urlParams.get('auto');
+
+  if (fruta && auto === 'open') {
+    openModal();
+    const selectFruit = document.getElementById('form-fruit');
+    if (selectFruit) {
+      selectFruit.value = fruta;
+    }
+  }
+});
+
+// 3. Cargar Ofertas en Tiempo Real
 db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
   const grid = document.getElementById('market-grid');
   grid.innerHTML = "";
@@ -315,7 +339,7 @@ db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
   document.getElementById('market-grid').innerHTML = '<p style="color:red;grid-column:1/-1;text-align:center;">Error de conexión con Firestore.</p>';
 });
 
-// 3. Guardar Lote (Publicación)
+// 4. Guardar Lote (Publicación)
 async function saveOfferToDatabase(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-submit');
@@ -348,7 +372,7 @@ async function saveOfferToDatabase(e) {
   }
 }
 
-// 4. Enviar Contraoferta Interna
+// 5. Enviar Contraoferta Interna
 async function submitInternalDeal(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-deal-submit');
@@ -378,7 +402,7 @@ async function submitInternalDeal(e) {
   }
 }
 
-// 5. Confirmar Compra Directa registrando Origen y Destino exacto
+// 6. Confirmar Compra Directa y Generar Flete
 async function confirmDirectPurchase(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-buy-submit');
@@ -417,7 +441,7 @@ async function confirmDirectPurchase(e) {
     await db.collection("fletes").add(fleteData);
 
     closeBuyModal();
-    alert('¡Compra exitosa! Se ha generado la orden de flete de ' + origenCity + ' hacia ' + destinoCity);
+    alert('¡Compra exitosa! Se ha generado automáticamente la orden de flete de ' + origenCity + ' hacia ' + destinoCity);
   } catch (err) {
     alert('Error al procesar la compra: ' + err.message);
   } finally {
@@ -426,7 +450,7 @@ async function confirmDirectPurchase(e) {
   }
 }
 
-// 6. Filtros
+// 7. Controles de Filtro e Interfaz
 function filterOffers() {
   const selectedFruit = document.getElementById('fruit-filter').value;
   const selectedCity = document.getElementById('city-filter').value;
