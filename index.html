@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
-:root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--blue:#2563eb}
+:root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--blue:#2563eb;--orange:#f39a48}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
-body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5;padding-bottom:70px}
+body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5;padding-bottom:80px}
 h1,h2,h3,.logo{font-family:"Space Grotesk",sans-serif}
 a{text-decoration:none;color:inherit}.container{max-width:1180px;margin:auto;padding:0 24px}
 
@@ -25,6 +25,7 @@ nav a:hover{color:var(--green)}
 .btn-primary{background:var(--green);color:white}.btn-primary:hover{background:#128c5b}
 .btn-outline{background:transparent;border:2px solid var(--green);color:var(--green)}.btn-outline:hover{background:var(--mint)}
 .btn-blue{background:var(--blue);color:white}.btn-blue:hover{background:#1d4ed8}
+.btn-orange{background:var(--orange);color:white}.btn-orange:hover{background:#e08837}
 
 .hero{padding:60px 0;text-align:center;background:linear-gradient(135deg,#10231c,#16a36a);color:#fff;border-radius:0 0 24px 24px}
 .hero h1{font-size:clamp(32px,4vw,52px);margin-bottom:15px}
@@ -40,13 +41,14 @@ nav a:hover{color:var(--green)}
 .result-card.show{display:block}
 .result-title{font-size:20px;font-weight:700;color:var(--green);margin-bottom:5px}
 
-.mobile-nav{position:fixed;bottom:0;left:0;right:0;height:65px;background:#fff;border-top:1px solid var(--line);display:flex;justify-space-around:center;align-items:center;z-index:999;box-shadow:0 -4px 15px rgba(0,0,0,0.05)}
-.mobile-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex:1;height:100%}
-.mobile-btn.active, .mobile-btn:hover{color:var(--green)}
-.mobile-btn span{font-size:20px;margin-bottom:2px}
+/* Barra Fija de Navegación Rápida Inferior (3 Atajos) */
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;z-index:999;box-shadow:0 -4px 20px rgba(0,0,0,0.08)}
+.mobile-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--dark);flex:1;height:100%;border-right:1px solid var(--line)}
+.mobile-btn:last-child{border-right:none}
+.mobile-btn:hover{background:var(--mint);color:var(--green)}
+.mobile-btn span{font-size:22px;margin-bottom:2px}
 
 footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
-@media(min-width:851px){.mobile-nav{display:none}body{padding-bottom:0}}
 @media(max-width:850px){nav a:not(.btn){display:none}}
 </style>
 </head>
@@ -74,12 +76,14 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 <main class="container">
   <div class="scanner-card" id="escaner">
     
+    <!-- Visor de Cámara / Imagen -->
     <div class="preview-box" id="preview-box">
-      <span id="placeholder-text" style="color:var(--muted)">📷 Utiliza la cámara o selecciona una fruta</span>
+      <span id="placeholder-text" style="color:var(--muted)">📷 Abre la cámara o sube una foto</span>
       <video id="webcam" autoplay playsinline style="display:none"></video>
       <img id="image-preview" style="display:none">
     </div>
 
+    <!-- Lista Desplegable Manual -->
     <select id="manual-select" class="form-control" onchange="handleManualSelect()">
       <option value="" disabled selected>-- O selecciona la fruta manualmente --</option>
       <option value="Cítricos / Naranja">🍊 Cítricos / Naranja</option>
@@ -90,13 +94,21 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
       <option value="Banano / Plátano">🍌 Banano / Plátano</option>
     </select>
 
-    <div style="display:flex;gap:10px">
+    <!-- Botones de Control del Escáner -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-primary" style="flex:1" onclick="startCamera()">📷 Abrir Cámara</button>
       <button class="btn btn-outline" style="flex:1" onclick="triggerFileUpload()">📁 Subir Imagen</button>
       <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
     </div>
 
-    <!-- Resultado con enlaces parametrizados -->
+    <!-- Botón de Escaneo Manual con IA (Solo visible tras encender cámara/imagen) -->
+    <div id="scan-trigger-container" style="display:none;margin-top:15px">
+      <button class="btn btn-orange" style="width:100%" onclick="captureAndAnalyze()">
+        🔍 Escanear Ahora con IA
+      </button>
+    </div>
+
+    <!-- Tarjeta con Resultado y Opciones parametrizadas -->
     <div class="result-card" id="result-card">
       <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;">Residuo Detectado:</div>
       <div class="result-title" id="detected-fruit-name">Cítricos / Naranja</div>
@@ -115,11 +127,20 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </main>
 
+<!-- Barra Fija Inferior con 3 Atajos para Navegación Rápida -->
 <div class="mobile-nav">
-  <a href="index.html" class="mobile-btn active"><span>📷</span>Escáner</a>
-  <a href="compra-venta.html" class="mobile-btn"><span>🛒</span>Marketplace</a>
-  <a href="fletes.html" class="mobile-btn"><span>🚚</span>Fletes</a>
-  <a href="recetas.html" class="mobile-btn"><span>💡</span>Ideas</a>
+  <a href="compra-venta.html" class="mobile-btn">
+    <span>🛒</span>
+    Compra/Venta
+  </a>
+  <a href="fletes.html" class="mobile-btn">
+    <span>🚚</span>
+    Fletes
+  </a>
+  <a href="recetas.html" class="mobile-btn">
+    <span>💡</span>
+    Emprendimientos
+  </a>
 </div>
 
 <footer>
@@ -131,15 +152,19 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 <script>
 let videoStream = null;
 
+// 1. Selección Manual desde el desplegable
 function handleManualSelect() {
   const selected = document.getElementById('manual-select').value;
   if(selected) {
     stopCamera();
     document.getElementById('placeholder-text').innerText = "Fruta seleccionada: " + selected;
+    document.getElementById('placeholder-text').style.display = 'block';
+    document.getElementById('scan-trigger-container').style.display = 'none';
     showResult(selected);
   }
 }
 
+// 2. Encender la cámara (No analiza automáticamente)
 async function startCamera() {
   const video = document.getElementById('webcam');
   const img = document.getElementById('image-preview');
@@ -148,15 +173,20 @@ async function startCamera() {
   img.style.display = 'none';
   placeholder.style.display = 'none';
   video.style.display = 'block';
+  document.getElementById('result-card').classList.remove('show');
 
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = videoStream;
-    setTimeout(() => { showResult("Cítricos / Naranja"); }, 2500);
+    
+    // Muestra el botón de "Escanear Ahora" para que el usuario decida cuándo analizar
+    document.getElementById('scan-trigger-container').style.display = 'block';
+
   } catch (err) {
-    alert("No se pudo acceder a la cámara. Puedes seleccionar la fruta desde la lista.");
+    alert("No se pudo acceder a la cámara. Puedes seleccionar la fruta directamente desde el menú.");
     placeholder.style.display = 'block';
     video.style.display = 'none';
+    document.getElementById('scan-trigger-container').style.display = 'none';
   }
 }
 
@@ -168,7 +198,10 @@ function stopCamera() {
   document.getElementById('webcam').style.display = 'none';
 }
 
-function triggerFileUpload() { document.getElementById('file-input').click(); }
+// 3. Subir Imagen desde Archivos
+function triggerFileUpload() { 
+  document.getElementById('file-input').click(); 
+}
 
 function handleFileUpload(event) {
   const file = event.target.files[0];
@@ -180,17 +213,28 @@ function handleFileUpload(event) {
       img.src = e.target.result;
       img.style.display = 'block';
       document.getElementById('placeholder-text').style.display = 'none';
-      showResult("Aguacate Hass");
+      document.getElementById('result-card').classList.remove('show');
+      
+      // Habilita el botón de escanear
+      document.getElementById('scan-trigger-container').style.display = 'block';
     };
     reader.readAsDataURL(file);
   }
 }
 
-// Actualiza los botones con parámetros de URL
+// 4. Acción del Botón "Escanear Ahora con IA"
+function captureAndAnalyze() {
+  // Simulación del análisis con IA al pulsar el botón
+  const frutas = ["Cítricos / Naranja", "Piña", "Aguacate Hass", "Mango"];
+  const frutaDetectada = frutas[Math.floor(Math.random() * frutas.length)];
+  
+  showResult(frutaDetectada);
+}
+
+// 5. Configurar Botones de Redirección parametrizados
 function showResult(fruitName) {
   document.getElementById('detected-fruit-name').innerText = fruitName;
   
-  // Asignar parámetros
   const param = encodeURIComponent(fruitName);
   document.getElementById('btn-to-market').href = `compra-venta.html?fruta=${param}&auto=open`;
   document.getElementById('btn-to-recipes').href = `recetas.html?fruta=${param}`;
@@ -200,5 +244,4 @@ function showResult(fruitName) {
 </script>
 
 </body>
-</html>
 </html>
