@@ -47,6 +47,7 @@ nav a:hover{color:var(--green)}
 .card-info div{margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .card-price{font-size:22px;font-weight:700;color:var(--green);margin-bottom:18px}
 .card-price span{font-size:13px;color:var(--muted);font-weight:400}
+.card-actions{display:flex;flex-direction:column;gap:8px}
 
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
 .modal.show{display:flex}
@@ -76,7 +77,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 <section class="hero-market">
   <div class="container">
     <h1>🤝 Marketplace Directo de Biomasa</h1>
-    <p>Plataforma integral de negociación interna: publica, recibe ofertas y transacciona dentro de EcoMatch.</p>
+    <p>Plataforma integral de negociación interna: publica, compra directo o envía contraofertas dentro de EcoMatch.</p>
   </div>
 </section>
 
@@ -124,7 +125,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </main>
 
-<!-- Modal 1: Publicar Lote (Solo Selecciones Desplegables y Números) -->
+<!-- Modal 1: Publicar Lote -->
 <div class="modal" id="publish-modal">
   <div class="modal-content">
     <h3 style="margin-bottom:15px;color:var(--dark)">➕ Publicar Lote de Residuo</h3>
@@ -183,11 +184,11 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </div>
 
-<!-- Modal 2: Negociación / Transacción Interna -->
+<!-- Modal 2: Contraoferta (Sin Mensaje) -->
 <div class="modal" id="deal-modal">
   <div class="modal-content">
-    <h3 style="margin-bottom:10px;color:var(--dark)">💼 Enviar Oferta de Compra Interna</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:15px;" id="deal-subtitle">Negociación en plataforma</p>
+    <h3 style="margin-bottom:10px;color:var(--dark)">💼 Enviar Contraoferta</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:15px;" id="deal-subtitle">Negociación de precio y volumen</p>
     
     <form onsubmit="submitInternalDeal(event)">
       <input type="hidden" id="deal-doc-id">
@@ -202,14 +203,30 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
         <input type="number" min="0.01" step="0.01" id="deal-price" class="form-control" placeholder="Ej: 0.80" required>
       </div>
 
-      <div class="form-group">
-        <label>Mensaje Interno para el Vendedor</label>
-        <textarea id="deal-msg" class="form-control" rows="3" placeholder="Ej: Requiero la entrega para esta semana en planta procesamiento..." required></textarea>
-      </div>
-
       <div style="display:flex;gap:10px;margin-top:20px">
         <button type="button" class="btn btn-outline" style="flex:1" onclick="closeDealModal()">Cancelar</button>
-        <button type="submit" id="btn-deal-submit" class="btn btn-primary" style="flex:1">Enviar Negociación</button>
+        <button type="submit" id="btn-deal-submit" class="btn btn-primary" style="flex:1">Enviar Contraoferta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 3: Comprar Ahora Mismo -->
+<div class="modal" id="buy-modal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:10px;color:var(--dark)">⚡ Comprar Ahora Mismo</h3>
+    <div id="buy-summary" style="background:var(--cream);padding:15px;border-radius:12px;margin-bottom:15px;font-size:14px;">
+      <!-- Resumen dinámico del pedido -->
+    </div>
+    
+    <form onsubmit="confirmDirectPurchase(event)">
+      <input type="hidden" id="buy-doc-id">
+      <input type="hidden" id="buy-volume-val">
+      <input type="hidden" id="buy-price-val">
+
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button type="button" class="btn btn-outline" style="flex:1" onclick="closeBuyModal()">Cancelar</button>
+        <button type="submit" id="btn-buy-submit" class="btn btn-primary" style="flex:1">Confirmar Compra</button>
       </div>
     </form>
   </div>
@@ -263,9 +280,14 @@ db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
         </div>
         <div>
           <div class="card-price">$${Number(data.price).toFixed(2)} USD <span>/ kg</span></div>
-          <button class="btn btn-outline" style="width:100%" onclick="openDealModal('${docId}', '${data.fruit}', '${data.price}')">
-            💼 Iniciar Negociación Interna
-          </button>
+          <div class="card-actions">
+            <button class="btn btn-primary" style="width:100%" onclick="openBuyModal('${docId}', '${data.fruit}', ${data.volume}, ${data.price})">
+              ⚡ Comprar Ahora
+            </button>
+            <button class="btn btn-outline" style="width:100%" onclick="openDealModal('${docId}', '${data.fruit}', '${data.price}')">
+              💼 Enviar Contraoferta
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -292,7 +314,7 @@ async function saveOfferToDatabase(e) {
     location: selectedCity,
     volume: parseFloat(document.getElementById('form-volume').value),
     price: parseFloat(document.getElementById('form-price').value),
-    sellerId: "USR-" + Math.floor(1000 + Math.random() * 9000), // Simula ID para futura Auth
+    sellerId: "USR-" + Math.floor(1000 + Math.random() * 9000),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -309,7 +331,7 @@ async function saveOfferToDatabase(e) {
   }
 }
 
-// 4. Enviar Transacción / Negociación Interna
+// 4. Enviar Contraoferta Interna
 async function submitInternalDeal(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-deal-submit');
@@ -318,11 +340,11 @@ async function submitInternalDeal(e) {
 
   const dealData = {
     loteId: document.getElementById('deal-doc-id').value,
+    type: "CONTRAOFERTA",
     buyerVolume: parseFloat(document.getElementById('deal-volume').value),
     offeredPrice: parseFloat(document.getElementById('deal-price').value),
-    message: document.getElementById('deal-msg').value,
     status: "PENDIENTE",
-    buyerId: "BUYER-" + Math.floor(1000 + Math.random() * 9000), // Simula ID del Comprador
+    buyerId: "BUYER-" + Math.floor(1000 + Math.random() * 9000),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -330,16 +352,46 @@ async function submitInternalDeal(e) {
     await db.collection("transacciones").add(dealData);
     closeDealModal();
     e.target.reset();
-    alert('¡Propuesta de compra enviada con éxito al vendedor dentro de EcoMatch!');
+    alert('¡Contraoferta enviada con éxito al vendedor!');
   } catch (err) {
-    alert('Error al procesar la solicitud: ' + err.message);
+    alert('Error al enviar la propuesta: ' + err.message);
   } finally {
     btn.disabled = false;
-    btn.innerText = "Enviar Negociación";
+    btn.innerText = "Enviar Contraoferta";
   }
 }
 
-// 5. Filtros
+// 5. Confirmar Compra Directa
+async function confirmDirectPurchase(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-buy-submit');
+  btn.disabled = true;
+  btn.innerText = "Procesando...";
+
+  const buyData = {
+    loteId: document.getElementById('buy-doc-id').value,
+    type: "COMPRA_DIRECTA",
+    buyerVolume: parseFloat(document.getElementById('buy-volume-val').value),
+    offeredPrice: parseFloat(document.getElementById('buy-price-val').value),
+    totalUSD: parseFloat(document.getElementById('buy-volume-val').value) * parseFloat(document.getElementById('buy-price-val').value),
+    status: "COMPLETADO",
+    buyerId: "BUYER-" + Math.floor(1000 + Math.random() * 9000),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  try {
+    await db.collection("transacciones").add(buyData);
+    closeBuyModal();
+    alert('¡Felicidades! La orden de compra ha sido procesada con éxito dentro de EcoMatch.');
+  } catch (err) {
+    alert('Error al procesar la compra: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Confirmar Compra";
+  }
+}
+
+// 6. Filtros
 function filterOffers() {
   const selectedFruit = document.getElementById('fruit-filter').value;
   const selectedCity = document.getElementById('city-filter').value;
@@ -361,10 +413,27 @@ function closeModal() { document.getElementById('publish-modal').classList.remov
 
 function openDealModal(docId, fruit, price) {
   document.getElementById('deal-doc-id').value = docId;
-  document.getElementById('deal-subtitle').innerText = `Proponiendo compra para: Lote de ${fruit} ($${price} USD/kg)`;
+  document.getElementById('deal-subtitle').innerText = `Proponiendo precio para: Lote de ${fruit} ($${price} USD/kg)`;
   document.getElementById('deal-modal').classList.add('show');
 }
 function closeDealModal() { document.getElementById('deal-modal').classList.remove('show'); }
+
+function openBuyModal(docId, fruit, volume, price) {
+  const total = (volume * price).toFixed(2);
+  document.getElementById('buy-doc-id').value = docId;
+  document.getElementById('buy-volume-val').value = volume;
+  document.getElementById('buy-price-val').value = price;
+  
+  document.getElementById('buy-summary').innerHTML = `
+    <div><b>Producto:</b> Lote de ${fruit}</div>
+    <div><b>Volumen Total:</b> ${volume.toLocaleString()} kg</div>
+    <div><b>Precio unitario:</b> $${price.toFixed(2)} USD / kg</div>
+    <hr style="margin:8px 0;border:0;border-top:1px solid var(--line)">
+    <div style="font-size:16px;font-weight:700;color:var(--green)"><b>Monto Total a Transaccionar:</b> $${total} USD</div>
+  `;
+  document.getElementById('buy-modal').classList.add('show');
+}
+function closeBuyModal() { document.getElementById('buy-modal').classList.remove('show'); }
 </script>
 
 </body>
