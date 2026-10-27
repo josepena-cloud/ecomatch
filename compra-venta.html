@@ -147,9 +147,9 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
         </select>
       </div>
 
-      <!-- Desplegable Ciudades -->
+      <!-- Desplegable Ciudades (Origen) -->
       <div class="form-group">
-        <label>Ciudad y Departamento</label>
+        <label>Ciudad de Origen (Vendedor)</label>
         <select id="form-location" class="form-control" required>
           <option value="" disabled selected>-- Selecciona la ciudad --</option>
           <option value="Armenia, Quindío">Armenia, Quindío</option>
@@ -211,7 +211,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </div>
 
-<!-- Modal 3: Comprar Ahora Mismo -->
+<!-- Modal 3: Comprar Ahora Mismo (Pide Ciudad de Destino) -->
 <div class="modal" id="buy-modal">
   <div class="modal-content">
     <h3 style="margin-bottom:10px;color:var(--dark)">⚡ Comprar Ahora Mismo</h3>
@@ -223,6 +223,23 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
       <input type="hidden" id="buy-price-val">
       <input type="hidden" id="buy-fruit-val">
       <input type="hidden" id="buy-location-val">
+
+      <!-- Selección Obligatoria de Ciudad de Destino -->
+      <div class="form-group">
+        <label>Selecciona tu Ciudad de Destino (Comprador)</label>
+        <select id="buy-destination-city" class="form-control" required>
+          <option value="" disabled selected>-- ¿A dónde se enviará la carga? --</option>
+          <option value="Armenia, Quindío">Armenia, Quindío</option>
+          <option value="Bogotá, D.C.">Bogotá, D.C.</option>
+          <option value="Medellín, Antioquia">Medellín, Antioquia</option>
+          <option value="Cali, Valle del Cauca">Cali, Valle del Cauca</option>
+          <option value="Bucaramanga, Santander">Bucaramanga, Santander</option>
+          <option value="Pereira, Risaralda">Pereira, Risaralda</option>
+          <option value="Manizales, Caldas">Manizales, Caldas</option>
+          <option value="Ibagué, Tolima">Ibagué, Tolima</option>
+          <option value="Neiva, Huila">Neiva, Huila</option>
+        </select>
+      </div>
 
       <div style="display:flex;gap:10px;margin-top:20px">
         <button type="button" class="btn btn-outline" style="flex:1" onclick="closeBuyModal()">Cancelar</button>
@@ -273,7 +290,7 @@ db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
           <span class="card-tag">Disponible</span>
           <h3 class="card-title">Lote de ${data.fruit}</h3>
           <div class="card-info">
-            <div>📍 <b>Ubicación:</b> ${data.location}</div>
+            <div>📍 <b>Ubicación Origen:</b> ${data.location}</div>
             <div>📦 <b>Volumen:</b> ${Number(data.volume).toLocaleString()} kg</div>
             <div>🏭 <b>ID Vendedor:</b> ${data.sellerId || 'USR-ANONIMO'}</div>
           </div>
@@ -361,7 +378,7 @@ async function submitInternalDeal(e) {
   }
 }
 
-// 5. Confirmar Compra Directa y Generar Flete Automáticamente
+// 5. Confirmar Compra Directa registrando Origen y Destino exacto
 async function confirmDirectPurchase(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-buy-submit');
@@ -372,7 +389,8 @@ async function confirmDirectPurchase(e) {
   const volume = parseFloat(document.getElementById('buy-volume-val').value);
   const price = parseFloat(document.getElementById('buy-price-val').value);
   const fruit = document.getElementById('buy-fruit-val').value;
-  const location = document.getElementById('buy-location-val').value;
+  const origenCity = document.getElementById('buy-location-val').value;
+  const destinoCity = document.getElementById('buy-destination-city').value;
 
   const buyData = {
     loteId: loteId,
@@ -386,8 +404,8 @@ async function confirmDirectPurchase(e) {
   };
 
   const fleteData = {
-    origen: location,
-    destino: "Planta de Procesamiento / Destino Final",
+    origen: origenCity,
+    destino: destinoCity,
     carga: `Residuo de ${fruit}`,
     pesoKg: volume,
     estado: "PENDIENTE",
@@ -395,14 +413,11 @@ async function confirmDirectPurchase(e) {
   };
 
   try {
-    // 1. Guardar la transacción de compra
     await db.collection("transacciones").add(buyData);
-    
-    // 2. Crear automáticamente la solicitud de flete para los conductores
     await db.collection("fletes").add(fleteData);
 
     closeBuyModal();
-    alert('¡Compra exitosa! Se ha generado automáticamente un pedido de flete para transportar este lote.');
+    alert('¡Compra exitosa! Se ha generado la orden de flete de ' + origenCity + ' hacia ' + destinoCity);
   } catch (err) {
     alert('Error al procesar la compra: ' + err.message);
   } finally {
@@ -448,9 +463,8 @@ function openBuyModal(docId, fruit, volume, price, location) {
   
   document.getElementById('buy-summary').innerHTML = `
     <div><b>Producto:</b> Lote de ${fruit}</div>
-    <div><b>Ubicación de Origen:</b> ${location}</div>
-    <div><b>Volumen Total:</b> ${volume.toLocaleString()} kg</div>
-    <div><b>Precio unitario:</b> $${price.toFixed(2)} USD / kg</div>
+    <div><b>Ciudad Origen:</b> ${location}</div>
+    <div><b>Volumen:</b> ${volume.toLocaleString()} kg</div>
     <hr style="margin:8px 0;border:0;border-top:1px solid var(--line)">
     <div style="font-size:16px;font-weight:700;color:var(--green)"><b>Monto Total:</b> $${total} USD</div>
   `;
@@ -459,7 +473,5 @@ function openBuyModal(docId, fruit, volume, price, location) {
 function closeBuyModal() { document.getElementById('buy-modal').classList.remove('show'); }
 </script>
 
-</body>
-</html>
 </body>
 </html>
