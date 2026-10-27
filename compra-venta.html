@@ -184,7 +184,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   </div>
 </div>
 
-<!-- Modal 2: Contraoferta (Sin Mensaje) -->
+<!-- Modal 2: Contraoferta -->
 <div class="modal" id="deal-modal">
   <div class="modal-content">
     <h3 style="margin-bottom:10px;color:var(--dark)">💼 Enviar Contraoferta</h3>
@@ -215,14 +215,14 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 <div class="modal" id="buy-modal">
   <div class="modal-content">
     <h3 style="margin-bottom:10px;color:var(--dark)">⚡ Comprar Ahora Mismo</h3>
-    <div id="buy-summary" style="background:var(--cream);padding:15px;border-radius:12px;margin-bottom:15px;font-size:14px;">
-      <!-- Resumen dinámico del pedido -->
-    </div>
+    <div id="buy-summary" style="background:var(--cream);padding:15px;border-radius:12px;margin-bottom:15px;font-size:14px;"></div>
     
     <form onsubmit="confirmDirectPurchase(event)">
       <input type="hidden" id="buy-doc-id">
       <input type="hidden" id="buy-volume-val">
       <input type="hidden" id="buy-price-val">
+      <input type="hidden" id="buy-fruit-val">
+      <input type="hidden" id="buy-location-val">
 
       <div style="display:flex;gap:10px;margin-top:20px">
         <button type="button" class="btn btn-outline" style="flex:1" onclick="closeBuyModal()">Cancelar</button>
@@ -281,7 +281,7 @@ db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
         <div>
           <div class="card-price">$${Number(data.price).toFixed(2)} USD <span>/ kg</span></div>
           <div class="card-actions">
-            <button class="btn btn-primary" style="width:100%" onclick="openBuyModal('${docId}', '${data.fruit}', ${data.volume}, ${data.price})">
+            <button class="btn btn-primary" style="width:100%" onclick="openBuyModal('${docId}', '${data.fruit}', ${data.volume}, ${data.price}, '${data.location}')">
               ⚡ Comprar Ahora
             </button>
             <button class="btn btn-outline" style="width:100%" onclick="openDealModal('${docId}', '${data.fruit}', '${data.price}')">
@@ -361,28 +361,48 @@ async function submitInternalDeal(e) {
   }
 }
 
-// 5. Confirmar Compra Directa
+// 5. Confirmar Compra Directa y Generar Flete Automáticamente
 async function confirmDirectPurchase(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-buy-submit');
   btn.disabled = true;
   btn.innerText = "Procesando...";
 
+  const loteId = document.getElementById('buy-doc-id').value;
+  const volume = parseFloat(document.getElementById('buy-volume-val').value);
+  const price = parseFloat(document.getElementById('buy-price-val').value);
+  const fruit = document.getElementById('buy-fruit-val').value;
+  const location = document.getElementById('buy-location-val').value;
+
   const buyData = {
-    loteId: document.getElementById('buy-doc-id').value,
+    loteId: loteId,
     type: "COMPRA_DIRECTA",
-    buyerVolume: parseFloat(document.getElementById('buy-volume-val').value),
-    offeredPrice: parseFloat(document.getElementById('buy-price-val').value),
-    totalUSD: parseFloat(document.getElementById('buy-volume-val').value) * parseFloat(document.getElementById('buy-price-val').value),
+    buyerVolume: volume,
+    offeredPrice: price,
+    totalUSD: volume * price,
     status: "COMPLETADO",
     buyerId: "BUYER-" + Math.floor(1000 + Math.random() * 9000),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
+  const fleteData = {
+    origen: location,
+    destino: "Planta de Procesamiento / Destino Final",
+    carga: `Residuo de ${fruit}`,
+    pesoKg: volume,
+    estado: "PENDIENTE",
+    fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
   try {
+    // 1. Guardar la transacción de compra
     await db.collection("transacciones").add(buyData);
+    
+    // 2. Crear automáticamente la solicitud de flete para los conductores
+    await db.collection("fletes").add(fleteData);
+
     closeBuyModal();
-    alert('¡Felicidades! La orden de compra ha sido procesada con éxito dentro de EcoMatch.');
+    alert('¡Compra exitosa! Se ha generado automáticamente un pedido de flete para transportar este lote.');
   } catch (err) {
     alert('Error al procesar la compra: ' + err.message);
   } finally {
@@ -418,23 +438,28 @@ function openDealModal(docId, fruit, price) {
 }
 function closeDealModal() { document.getElementById('deal-modal').classList.remove('show'); }
 
-function openBuyModal(docId, fruit, volume, price) {
+function openBuyModal(docId, fruit, volume, price, location) {
   const total = (volume * price).toFixed(2);
   document.getElementById('buy-doc-id').value = docId;
   document.getElementById('buy-volume-val').value = volume;
   document.getElementById('buy-price-val').value = price;
+  document.getElementById('buy-fruit-val').value = fruit;
+  document.getElementById('buy-location-val').value = location;
   
   document.getElementById('buy-summary').innerHTML = `
     <div><b>Producto:</b> Lote de ${fruit}</div>
+    <div><b>Ubicación de Origen:</b> ${location}</div>
     <div><b>Volumen Total:</b> ${volume.toLocaleString()} kg</div>
     <div><b>Precio unitario:</b> $${price.toFixed(2)} USD / kg</div>
     <hr style="margin:8px 0;border:0;border-top:1px solid var(--line)">
-    <div style="font-size:16px;font-weight:700;color:var(--green)"><b>Monto Total a Transaccionar:</b> $${total} USD</div>
+    <div style="font-size:16px;font-weight:700;color:var(--green)"><b>Monto Total:</b> $${total} USD</div>
   `;
   document.getElementById('buy-modal').classList.add('show');
 }
 function closeBuyModal() { document.getElementById('buy-modal').classList.remove('show'); }
 </script>
 
+</body>
+</html>
 </body>
 </html>
