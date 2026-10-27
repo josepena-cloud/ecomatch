@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
+<!-- Carga del Motor de Inteligencia Artificial (TensorFlow.js + MobileNet) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
+
 <style>
 :root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--blue:#2563eb;--orange:#f39a48}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
@@ -40,6 +44,9 @@ nav a:hover{color:var(--green)}
 .result-card{background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:20px;display:none}
 .result-card.show{display:block}
 .result-title{font-size:20px;font-weight:700;color:var(--green);margin-bottom:5px}
+
+.warning-card{background:#fff7ed;border:1px solid #ffedd5;border-radius:16px;padding:20px;margin-top:20px;display:none;color:#9a3412}
+.warning-card.show{display:block}
 
 /* Barra Fija Inferior con Atajos */
 .mobile-nav{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--line);display:flex;justify-space-around:center;align-items:center;z-index:999;box-shadow:0 -4px 20px rgba(0,0,0,0.08)}
@@ -76,14 +83,12 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 <main class="container">
   <div class="scanner-card" id="escaner">
     
-    <!-- Visor -->
+    <!-- Visor de Entrada -->
     <div class="preview-box" id="preview-box">
-      <span id="placeholder-text" style="color:var(--muted)">📷 Enciende la cámara o sube una imagen</span>
+      <span id="placeholder-text" style="color:var(--muted)">📷 Enciende la cámara o sube una foto</span>
       <video id="webcam" autoplay playsinline style="display:none"></video>
       <img id="image-preview" style="display:none" crossorigin="anonymous">
     </div>
-
-    <canvas id="analysis-canvas" style="display:none;"></canvas>
 
     <!-- Selección Manual por Desplegable -->
     <select id="manual-select" class="form-control" onchange="handleManualSelect()">
@@ -103,18 +108,19 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
       <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
     </div>
 
-    <!-- Botón de Enviar al Servidor de IA -->
+    <!-- Botón de Análisis Neuronal -->
     <div id="scan-trigger-container" style="display:none;margin-top:15px">
-      <button class="btn btn-orange" id="btn-snap" style="width:100%" onclick="sendImageToAIServer()">
-        🌐 Enviar a Servidor IA para Análisis
+      <button class="btn btn-orange" id="btn-snap" style="width:100%" onclick="analyzeImageWithTensorFlow()">
+        🧠 Analizar con Red Neuronal TensorFlow
       </button>
     </div>
 
-    <!-- Tarjeta con Resultado -->
+    <!-- Tarjeta con Resultado Exitoso -->
     <div class="result-card" id="result-card">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;">Respuesta del Servidor de Visión Artificial:</div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;">Resultado del Análisis de Visión Artificial:</div>
       <div class="result-title" id="detected-fruit-name">Procesando...</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:15px;" id="confidence-text">Certeza de clasificación: 0%</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:5px;" id="raw-label-text"></p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:15px;" id="confidence-text">Certeza: 0%</p>
       
       <div style="display:flex;flex-direction:column;gap:10px;">
         <a id="btn-to-market" href="compra-venta.html" class="btn btn-primary" style="width:100%">
@@ -126,10 +132,17 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
       </div>
     </div>
 
+    <!-- Tarjeta de Aviso Cuando NO se detecta la fruta -->
+    <div class="warning-card" id="warning-card">
+      <h4 style="font-size:16px;margin-bottom:5px;">⚠️ No logramos identificar la biomasa con certeza</h4>
+      <p style="font-size:13px;margin-bottom:10px;" id="warning-detail">La imagen capturada no coincide con nuestro catálogo de frutas registradas.</p>
+      <p style="font-size:13px;font-weight:700;">👉 Por favor, selecciona manualmente la fruta en el menú desplegable de arriba para continuar.</p>
+    </div>
+
   </div>
 </main>
 
-<!-- Atajos Inferiores para Móvil -->
+<!-- Atajos Inferiores para Móviles -->
 <div class="mobile-nav">
   <a href="compra-venta.html" class="mobile-btn">
     <span>🛒</span>
@@ -153,8 +166,19 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 
 <script>
 let videoStream = null;
+let aiModel = null;
 
-// 1. Selección Manual desde el Menú Desplegable
+async function initAIModel() {
+  try {
+    aiModel = await mobilenet.load();
+    console.log("Red Neuronal TensorFlow cargada");
+  } catch(e) {
+    console.error("Error al cargar modelo TensorFlow:", e);
+  }
+}
+initAIModel();
+
+// 1. Selección Manual
 function handleManualSelect() {
   const selected = document.getElementById('manual-select').value;
   if(selected) {
@@ -162,7 +186,8 @@ function handleManualSelect() {
     document.getElementById('placeholder-text').innerText = "Fruta seleccionada: " + selected;
     document.getElementById('placeholder-text').style.display = 'block';
     document.getElementById('scan-trigger-container').style.display = 'none';
-    showResult(selected, 100);
+    hideWarning();
+    showResult(selected, 100, "Selección Manual del Usuario");
   }
 }
 
@@ -175,17 +200,18 @@ async function startCamera() {
   img.style.display = 'none';
   placeholder.style.display = 'none';
   video.style.display = 'block';
-  document.getElementById('result-card').classList.remove('show');
+  hideResult();
+  hideWarning();
 
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = videoStream;
     
-    document.getElementById('btn-snap').innerText = "🌐 Enviar Fotografía a Servidor IA";
+    document.getElementById('btn-snap').innerText = "🧠 Analizar Cámara con Red Neuronal";
     document.getElementById('scan-trigger-container').style.display = 'block';
 
   } catch (err) {
-    alert("No se pudo encender la cámara. Puedes seleccionar la fruta desde la lista.");
+    alert("No se pudo encender la cámara. Puedes seleccionar la fruta desde la lista desplegable.");
     placeholder.style.display = 'block';
     video.style.display = 'none';
   }
@@ -214,98 +240,103 @@ function handleFileUpload(event) {
       img.src = e.target.result;
       img.style.display = 'block';
       document.getElementById('placeholder-text').style.display = 'none';
-      document.getElementById('result-card').classList.remove('show');
+      hideResult();
+      hideWarning();
       
-      document.getElementById('btn-snap').innerText = "🌐 Analizar Imagen en Servidor IA";
+      document.getElementById('btn-snap').innerText = "🧠 Analizar Foto Subida con Red Neuronal";
       document.getElementById('scan-trigger-container').style.display = 'block';
     };
     reader.readAsDataURL(file);
   }
 }
 
-// 4. Enviar Imagen al Servidor de Redes Neuronales (Hugging Face / ResNet API)
-async function sendImageToAIServer() {
+// 4. Análisis real estricto con TensorFlow.js
+async function analyzeImageWithTensorFlow() {
   const btn = document.getElementById('btn-snap');
   btn.disabled = true;
-  btn.innerText = "⏳ Conectando con Servidor de Red Neuronal...";
+  btn.innerText = "⏳ Ejecutando red neuronal...";
+
+  hideResult();
+  hideWarning();
 
   const video = document.getElementById('webcam');
   const img = document.getElementById('image-preview');
-  const canvas = document.getElementById('analysis-canvas');
-  const ctx = canvas.getContext('2d');
+  const targetElement = video.style.display === 'block' ? video : img;
 
-  canvas.width = 300;
-  canvas.height = 300;
-
-  if (video.style.display === 'block') {
-    ctx.drawImage(video, 0, 0, 300, 300);
-  } else if (img.style.display === 'block') {
-    ctx.drawImage(img, 0, 0, 300, 300);
-  }
-
-  // Convertir fotograma a Blob para transmisión HTTP
-  canvas.toBlob(async (blob) => {
-    try {
-      // Modelo de clasificación de objetos e imágenes (Google ViT / ResNet)
-      const response = await fetch("https://api-inference.huggingface.co/models/google/vit-base-patch16-224", {
-        method: "POST",
-        body: blob
-      });
-
-      const results = await response.json();
-
-      if (Array.isArray(results) && results.length > 0) {
-        // Mapear la etiqueta devuelta por la red neuronal a nuestras categorías de EcoMatch
-        const topLabel = results[0].label.toLowerCase();
-        const score = Math.round(results[0].score * 100);
-
-        let finalFruit = "Cítricos / Naranja";
-
-        if (topLabel.includes("banana") || topLabel.includes("plantain")) {
-          finalFruit = "Banano / Plátano";
-        } else if (topLabel.includes("avocado")) {
-          finalFruit = "Aguacate Hass";
-        } else if (topLabel.includes("pineapple")) {
-          finalFruit = "Piña";
-        } else if (topLabel.includes("mango")) {
-          finalFruit = "Mango";
-        } else if (topLabel.includes("orange") || topLabel.includes("lemon") || topLabel.includes("citrus")) {
-          finalFruit = "Cítricos / Naranja";
-        } else if (topLabel.includes("coffee") || topLabel.includes("bean")) {
-          finalFruit = "Café (Cáscara/Cisco)";
-        } else {
-          // Si el objeto es ambiguo, utiliza coincidencia estructural
-          finalFruit = document.getElementById('manual-select').value || "Banano / Plátano";
-        }
-
-        showResult(finalFruit, score > 50 ? score : 89);
-      } else {
-        fallbackAnalysis();
-      }
-    } catch (err) {
-      fallbackAnalysis();
-    } finally {
-      btn.disabled = false;
-      btn.innerText = "📸 Enviar Nueva Toma";
+  try {
+    if (!aiModel) {
+      aiModel = await mobilenet.load();
     }
-  }, "image/jpeg");
+
+    const predictions = await aiModel.classify(targetElement);
+    
+    if (predictions && predictions.length > 0) {
+      const topResult = predictions[0];
+      const rawClassName = topResult.className.toLowerCase();
+      const score = Math.round(topResult.probability * 100);
+
+      let detectedFruit = null; // Inicialmente nulo para validar detección estricta
+
+      // Mapeo estricto de clases
+      if (rawClassName.includes("banana") || rawClassName.includes("plantain")) {
+        detectedFruit = "Banano / Plátano";
+      } else if (rawClassName.includes("avocado")) {
+        detectedFruit = "Aguacate Hass";
+      } else if (rawClassName.includes("pineapple")) {
+        detectedFruit = "Piña";
+      } else if (rawClassName.includes("mango")) {
+        detectedFruit = "Mango";
+      } else if (rawClassName.includes("orange") || rawClassName.includes("lemon") || rawClassName.includes("lime") || rawClassName.includes("citrus")) {
+        detectedFruit = "Cítricos / Naranja";
+      } else if (rawClassName.includes("coffee") || rawClassName.includes("bean")) {
+        detectedFruit = "Café (Cáscara/Cisco)";
+      }
+
+      // Si se detectó una fruta y la certeza es mayor o igual al 25%
+      if (detectedFruit && score >= 25) {
+        showResult(detectedFruit, score, `Patrón reconocido: "${topResult.className}"`);
+      } else {
+        // Muestra aviso de selección manual en lugar de forzar una fruta
+        showWarning(`El modelo identificó "${topResult.className}" (${score}%), lo cual no coincide con las biomasas admitidas.`);
+      }
+
+    } else {
+      showWarning("No se detectaron patrones claros en la imagen.");
+    }
+
+  } catch (err) {
+    console.error("Error en la ejecución de la IA:", err);
+    showWarning("Ocurrió un inconveniente al procesar la imagen.");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "📸 Tomar Otra Captura";
+  }
 }
 
-function fallbackAnalysis() {
-  const selected = document.getElementById('manual-select').value || "Banano / Plátano";
-  showResult(selected, 91);
-}
-
-// 5. Mostrar Resultados
-function showResult(fruitName, confidence) {
+// 5. Gestión de Tarjetas
+function showResult(fruitName, confidence, rawDetail) {
   document.getElementById('detected-fruit-name').innerText = fruitName;
-  document.getElementById('confidence-text').innerText = `Precisión devuelta por el servidor: ${confidence}%`;
+  document.getElementById('confidence-text').innerText = `Certeza del modelo TensorFlow: ${confidence}%`;
+  document.getElementById('raw-label-text').innerText = rawDetail || "";
   
   const param = encodeURIComponent(fruitName);
   document.getElementById('btn-to-market').href = `compra-venta.html?fruta=${param}&auto=open`;
   document.getElementById('btn-to-recipes').href = `recetas.html?fruta=${param}`;
   
   document.getElementById('result-card').classList.add('show');
+}
+
+function hideResult() {
+  document.getElementById('result-card').classList.remove('show');
+}
+
+function showWarning(detailText) {
+  document.getElementById('warning-detail').innerText = detailText;
+  document.getElementById('warning-card').classList.add('show');
+}
+
+function hideWarning() {
+  document.getElementById('warning-card').classList.remove('show');
 }
 </script>
 
