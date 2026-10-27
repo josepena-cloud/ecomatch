@@ -3,59 +3,155 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EcoMatch — Misiones de Flete</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<title>EcoMatch — Modo Conductor / Fletes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- SDKs de Firebase Firestore -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
 <style>
-:root{--green:#16a36a;--dark:#10231c;--line:#dce8e1;--blue:#2563eb;--blue-light:#eff6ff}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"DM Sans",sans-serif;color:var(--dark)}
-h1,h2,.logo{font-family:"Space Grotesk",sans-serif}
+:root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--orange:#f39a48;--blue:#2563eb}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5}
+h1,h2,h3,.logo{font-family:"Space Grotesk",sans-serif}
 a{text-decoration:none;color:inherit}.container{max-width:1180px;margin:auto;padding:0 24px}
-header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line)}
+
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav{height:76px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-weight:700;font-size:25px;display:flex;align-items:center;gap:9px}.logo span{color:var(--green)}
-.logo-mark{width:35px;height:35px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:700}
+.logo-mark{width:35px;height:35px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700}
 nav{display:flex;gap:20px;align-items:center;font-size:14px;font-weight:600}
-.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}
-.trip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:30px}
-.trip-card{border:1px solid var(--line);border-radius:18px;padding:22px;background:#fff}
-.trip-header{display:flex;justify-content:space-between;margin-bottom:12px;font-weight:700}
+nav a:hover{color:var(--green)}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.2s}
+.btn-primary{background:var(--green);color:white}.btn-primary:hover{background:#128c5b}
+.btn-maps{background:var(--blue);color:white}.btn-maps:hover{background:#1d4ed8}
+
+.hero-fletes{background:linear-gradient(135deg,#10231c,#16a36a);color:#fff;padding:50px 0;border-radius:0 0 24px 24px}
+.hero-fletes h1{font-size:clamp(28px,3.5vw,42px);margin-bottom:10px}
+.hero-fletes p{color:#dff6e9;font-size:16px;max-width:650px}
+
+.fletes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin:40px 0 60px}
+.card-flete{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between}
+.status-badge{display:inline-block;padding:4px 12px;background:var(--orange);color:#fff;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:12px}
+.status-badge.taken{background:var(--green)}
+.flete-title{font-size:18px;font-weight:700;margin-bottom:10px;color:var(--dark)}
+.flete-detail{font-size:14px;color:var(--muted);margin-bottom:8px}
+
+footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
+@media(max-width:850px){nav a:not(.btn){display:none}}
 </style>
 </head>
 <body>
+
 <header>
 <div class="container nav">
   <a class="logo" href="index.html"><div class="logo-mark">E</div>Eco<span>Match</span></a>
   <nav>
     <a href="index.html">Escáner IA</a>
-    <a href="fletes.html" style="color:var(--blue)">Modo Conductor 🚚</a>
+    <a href="fletes.html" style="color:var(--green)">Modo Conductor 🚚</a>
     <a href="compra-venta.html">Compra/Venta</a>
     <a href="recetas.html">Emprendimientos</a>
+    <a class="btn btn-primary" href="index.html#escaner">Escanear Residuo</a>
   </nav>
 </div>
 </header>
 
-<main class="container" style="padding: 50px 24px;">
-  <h2>🚚 Misiones de Flete y Recolección</h2>
-  <p style="color:#64746d">Acepta solicitudes de transporte entre generadores de residuos e industrias.</p>
+<section class="hero-fletes">
+  <div class="container">
+    <h1>🚚 Panel de Fletes y Logística Orgánica</h1>
+    <p>Acepta viajes de transporte y abre la ruta optimizada directamente en Google Maps.</p>
+  </div>
+</section>
 
-  <div class="trip-grid">
-    <div class="trip-card">
-      <div class="trip-header"><span>Misión #1024</span><span style="color:var(--green)">+$4.50 USD</span></div>
-      <p>📍 <b>Origen:</b> Plaza de Mercado Corabastos</p>
-      <p>🏁 <b>Destino:</b> BioEsencias Agroindustrial</p>
-      <p>📦 <b>Carga:</b> 50 kg de Cáscara de Naranja</p>
-      <button class="btn" style="width:100%;margin-top:15px" onclick="alert('Misión Aceptada')">Aceptar Misión</button>
-    </div>
-
-    <div class="trip-card">
-      <div class="trip-header"><span>Misión #1025</span><span style="color:var(--green)">+$6.00 USD</span></div>
-      <p>📍 <b>Origen:</b> Pulpa de Frutas del Valle</p>
-      <p>🏁 <b>Destino:</b> Laboratorio Cosmético BioSkin</p>
-      <p>📦 <b>Carga:</b> 30 kg de Semilla de Aguacate Hass</p>
-      <button class="btn" style="width:100%;margin-top:15px" onclick="alert('Misión Aceptada')">Aceptar Misión</button>
-    </div>
+<main class="container">
+  <h2 style="margin-top:30px;color:var(--dark)">Solicitudes de Carga en Tiempo Real</h2>
+  <div class="fletes-grid" id="fletes-grid">
+    <p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">Cargando solicitudes de fletes...</p>
   </div>
 </main>
+
+<footer>
+<div class="container">
+  <small>© 2026 EcoMatch. Plataforma de Revalorización Orgánica.</small>
+</div>
+</footer>
+
+<script>
+// 1. Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBBkkkzxL50ikszUxoieH3vImoY4WXFzao",
+  authDomain: "ecomatch-b5e42.firebaseapp.com",
+  projectId: "ecomatch-b5e42",
+  storageBucket: "ecomatch-b5e42.firebasestorage.app",
+  messagingSenderId: "22398435997",
+  appId: "1:22398435997:web:f0bffde5532a6870230a74",
+  measurementId: "G-GH2PEQERB2"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 2. Escuchar fletes en tiempo real
+db.collection("fletes").orderBy("fechaCreacion", "desc").onSnapshot((snapshot) => {
+  const grid = document.getElementById('fletes-grid');
+  grid.innerHTML = "";
+
+  if (snapshot.empty) {
+    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;">No hay fletes pendientes por recoger en este momento.</p>';
+    return;
+  }
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const isEnTransito = data.estado === "EN TRÁNSITO";
+    
+    // Generar enlace dinámico para Google Maps entre Origen y Destino
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(data.origen)}&destination=${encodeURIComponent(data.destino)}`;
+
+    const cardHTML = `
+      <div class="card-flete">
+        <div>
+          <span class="status-badge ${isEnTransito ? 'taken' : ''}">🚚 ${data.estado || 'PENDIENTE'}</span>
+          <h3 class="flete-title">${data.carga}</h3>
+          <div class="flete-detail">📍 <b>Origen:</b> ${data.origen}</div>
+          <div class="flete-detail">🏁 <b>Destino:</b> ${data.destino}</div>
+          <div class="flete-detail">⚖️ <b>Peso Carga:</b> ${Number(data.pesoKg).toLocaleString()} kg</div>
+        </div>
+        
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:15px;">
+          ${!isEnTransito ? `
+            <button class="btn btn-primary" onclick="aceptarFlete('${doc.id}')">
+              ✅ Aceptar Viaje / Cargar
+            </button>
+          ` : ''}
+          <a href="${mapsUrl}" target="_blank" class="btn btn-maps" style="text-align:center;">
+            🗺️ Abrir Ruta en Google Maps
+          </a>
+        </div>
+      </div>
+    `;
+    grid.insertAdjacentHTML('beforeend', cardHTML);
+  });
+}, (error) => {
+  console.error("Error al cargar fletes:", error);
+  document.getElementById('fletes-grid').innerHTML = '<p style="color:red;grid-column:1/-1;text-align:center;">Error al conectar con Firestore.</p>';
+});
+
+// 3. Aceptar Flete
+async function aceptarFlete(docId) {
+  try {
+    await db.collection("fletes").doc(docId).update({
+      estado: "EN TRÁNSITO"
+    });
+    alert("¡Viaje asignado con éxito! Haz clic en 'Abrir Ruta en Google Maps' para iniciar la navegación GPS.");
+  } catch (err) {
+    alert("Error al aceptar el flete: " + err.message);
+  }
+}
+</script>
+
 </body>
 </html>
