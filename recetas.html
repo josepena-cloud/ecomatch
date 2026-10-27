@@ -3,24 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EcoMatch — Guías de Emprendimiento</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<title>EcoMatch — Guías de Emprendimiento Orgánico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
 <style>
-:root{--green:#16a36a;--dark:#10231c;--line:#dce8e1}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"DM Sans",sans-serif;color:var(--dark)}
-h1,h2,.logo{font-family:"Space Grotesk",sans-serif}
+:root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--orange:#f39a48;--blue:#2563eb}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5}
+h1,h2,h3,h4,.logo{font-family:"Space Grotesk",sans-serif}
 a{text-decoration:none;color:inherit}.container{max-width:1180px;margin:auto;padding:0 24px}
-header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line)}
+
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav{height:76px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-weight:700;font-size:25px;display:flex;align-items:center;gap:9px}.logo span{color:var(--green)}
-.logo-mark{width:35px;height:35px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:700}
+.logo-mark{width:35px;height:35px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700}
 nav{display:flex;gap:20px;align-items:center;font-size:14px;font-weight:600}
-.recipe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:30px}
-.recipe-card{border:1px solid var(--line);border-radius:16px;padding:20px;background:#fff}
+nav a:hover{color:var(--green)}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.2s}
+.btn-primary{background:var(--green);color:white}.btn-primary:hover{background:#128c5b}
+
+.hero-ideas{background:linear-gradient(135deg,#10231c,#16a36a);color:#fff;padding:50px 0;border-radius:0 0 24px 24px}
+.hero-ideas h1{font-size:clamp(28px,3.5vw,42px);margin-bottom:10px}
+.hero-ideas p{color:#dff6e9;font-size:16px;max-width:700px}
+
+.controls{display:flex;gap:15px;margin:30px 0;align-items:center;flex-wrap:wrap}
+.filter-select select{width:100%;min-width:280px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);font-family:inherit;font-weight:600;font-size:14px;outline:none;background:#fff}
+.filter-select select:focus{border-color:var(--green)}
+
+.ideas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:24px;margin-bottom:60px}
+.card-idea{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between}
+.fruit-badge{display:inline-block;padding:4px 12px;background:var(--mint);color:#087047;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:12px}
+.idea-title{font-size:20px;margin-bottom:8px;color:var(--dark)}
+.idea-desc{font-size:14px;color:var(--muted);margin-bottom:15px}
+
+.section-box{background:var(--cream);padding:14px;border-radius:12px;margin-bottom:12px;font-size:13px}
+.section-box h4{color:var(--dark);font-size:14px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.section-box ul{padding-left:18px;color:#334155}
+.invima-box{background:#fff7ed;border:1px solid #ffedd5;padding:14px;border-radius:12px;font-size:13px;color:#9a3412}
+.invima-box h4{color:#c2410c;font-size:14px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+
+footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
+@media(max-width:850px){nav a:not(.btn){display:none}}
 </style>
 </head>
 <body>
+
 <header>
 <div class="container nav">
   <a class="logo" href="index.html"><div class="logo-mark">E</div>Eco<span>Match</span></a>
@@ -29,27 +58,223 @@ nav{display:flex;gap:20px;align-items:center;font-size:14px;font-weight:600}
     <a href="fletes.html">Modo Conductor 🚚</a>
     <a href="compra-venta.html">Compra/Venta</a>
     <a href="recetas.html" style="color:var(--green)">Emprendimientos</a>
+    <a class="btn btn-primary" href="index.html#escaner">Escanear Residuo</a>
   </nav>
 </div>
 </header>
 
-<main class="container" style="padding: 50px 24px;">
-  <h2>💡 Catálogo de Procesos de Revalorización</h2>
-  <p style="color:#64746d">Guías técnicas para crear bioproductos a partir de cáscaras y pepas.</p>
+<section class="hero-ideas">
+  <div class="container">
+    <h1>💡 Emprendimientos e Industrialización Orgánica</h1>
+    <p>Modelos de negocio circular, procesamiento técnico y cumplimiento normativo (INVIMA y Salubridad) para transformar biomasa en productos de alto valor.</p>
+  </div>
+</section>
 
-  <div class="recipe-grid">
-    <div class="recipe-card">
-      <h3>Extracción de Aceite de Limoneno</h3>
-      <p style="font-size:14px;color:#64746d;margin:10px 0">A partir de cáscaras de naranja y cítricos mediante prensado o destilación por arrastre de vapor.</p>
-      <small style="color:var(--green);font-weight:700">Rentabilidad Estimada: ~70%</small>
-    </div>
-
-    <div class="recipe-card">
-      <h3>Harina de Pectina para Mermeladas</h3>
-      <p style="font-size:14px;color:#64746d;margin:10px 0">Procesamiento de pericarpios de maracuyá y manzanillas mediante secado y molienda.</p>
-      <small style="color:var(--green);font-weight:700">Rentabilidad Estimada: ~75%</small>
+<main class="container">
+  
+  <div class="controls">
+    <label style="font-weight:700;font-size:14px;">Filtrar por Biomasa:</label>
+    <div class="filter-select">
+      <select id="fruit-selector" onchange="filterIdeas()">
+        <option value="todos">Ver Todos los Residuo de Fruta</option>
+        <option value="Cítricos / Naranja">Cítricos / Naranja (Cáscara y Bagazo)</option>
+        <option value="Piña">Piña (Cáscara y Corazón)</option>
+        <option value="Aguacate Hass">Aguacate Hass (Pepa/Semicapa)</option>
+        <option value="Mango">Mango (Pepa y Cáscara)</option>
+        <option value="Café (Cáscara/Cisco)">Café (Cáscara y Cisco)</option>
+        <option value="Banano / Plátano">Banano / Plátano (Cáscara)</option>
+      </select>
     </div>
   </div>
+
+  <div class="ideas-grid" id="ideas-container">
+
+    <!-- 1. CÍTRICOS -->
+    <div class="card-idea" data-fruit="Cítricos / Naranja">
+      <div>
+        <span class="fruit-badge">🍊 Cítricos / Naranja</span>
+        <h3 class="idea-title">Aceites Esenciales y Aceite Limoneno</h3>
+        <p class="idea-desc">Extracción de aceites aromáticos e industriales a partir del pericarpio de la naranja para la industria cosmetológica y de limpieza biológica.</p>
+        
+        <div class="section-box">
+          <h4>⚙️ Proceso de Elaboración:</h4>
+          <ul>
+            <li>Prensado en frío o destilación por arrastre de vapor del pericarpio fresco.</li>
+            <li>Decantación y centrifugación para separar fase acuosa del aceite puro.</li>
+            <li>Filtrado de residuos sólidos e hidrolato.</li>
+          </ul>
+        </div>
+
+        <div class="invima-box">
+          <h4>🏛️ Normativa, Salubridad e INVIMA:</h4>
+          <ul>
+            <li><b>Cosmético:</b> NSO (Notificación Sanitaria Obligatoria) bajo Decisión 516 CAN.</li>
+            <li><b>Aseo / Limpieza:</b> Notificación Sanitaria NSOB de uso doméstico.</li>
+            <li><b>Salubridad:</b> Control estricto de humedad para evitar hongos del género <i>Penicillium</i>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. PIÑA -->
+    <div class="card-idea" data-fruit="Piña">
+      <div>
+        <span class="fruit-badge">🍍 Piña</span>
+        <h3 class="idea-title">Bromelina Purificada y Bebidas Fermentadas</h3>
+        <p class="idea-desc">Extracción de la enzima bromelina para ablandadores de carne y cosméticos, o fermentación biológica para vinagres ecológicos.</p>
+
+        <div class="section-box">
+          <h4>⚙️ Proceso de Elaboración:</h4>
+          <ul>
+            <li>Triturado del corazón y corteza limpia.</li>
+            <li>Filtración y precipitación enzimática con etanol de grado alimenticio.</li>
+            <li>Liofilizado y empacado al vacío para mantener bioactividad.</li>
+          </ul>
+        </div>
+
+        <div class="invima-box">
+          <h4>🏛️ Normativa, Salubridad e INVIMA:</h4>
+          <ul>
+            <li><b>Insumo Alimentario:</b> Registro Sanitario INVIMA Categoría Alimentos (RSA).</li>
+            <li><b>Salubridad:</b> Concepto Sanitario Favorable del establecimiento (Resolución 2674 de 2013).</li>
+            <li><b>Calidad:</b> Control del pH y cadena de frío durante la extracción enzimática.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. AGUACATE HASS -->
+    <div class="card-idea" data-fruit="Aguacate Hass">
+      <div>
+        <span class="fruit-badge">🥑 Aguacate Hass</span>
+        <h3 class="idea-title">Polvo Colorante Natural y Bioplástico</h3>
+        <p class="idea-desc">Aprovechamiento de la pepa rica en taninos para tintes textiles ecológicos y polímeros biodegradables para empaques compostables.</p>
+
+        <div class="section-box">
+          <h4>⚙️ Proceso de Elaboración:</h4>
+          <ul>
+            <li>Lavado, desinfección y troceado de pepas frescas.</li>
+            <li>Extracción alcalina de almidón y taninos.</li>
+            <li>Secado industrial en horno deshidratador a 60°C y pulverización fina.</li>
+          </ul>
+        </div>
+
+        <div class="invima-box">
+          <h4>🏛️ Normativa, Salubridad e INVIMA:</h4>
+          <ul>
+            <li><b>Envases/Empaques:</b> Cumplimiento de Resolución 683 de 2012 (Materiales en contacto con alimentos).</li>
+            <li><b>Salubridad:</b> Control de bacterias esporuladas en harina de pepa.</li>
+            <li><b>Textil:</b> Libre de metales pesados según norma técnica.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. MANGO -->
+    <div class="card-idea" data-fruit="Mango">
+      <div>
+        <span class="fruit-badge">🥭 Mango</span>
+        <h3 class="idea-title">Mantequilla de Manteca de Mango y Harina Péctica</h3>
+        <p class="idea-desc">Extracción de grasa vegetal bio-compatible del hueso del mango para formulación de cremas dermatológicas de alta gama.</p>
+
+        <div class="section-box">
+          <h4>⚙️ Proceso de Elaboración:</h4>
+          <ul>
+            <li>Decorticación del endocarpio leñoso para extraer la almendra interna.</li>
+            <li>Prensado mecánico helicoidal de la semilla.</li>
+            <li>Refinado suave y filtración para obtener manteca pura sólida a temperatura ambiente.</li>
+          </ul>
+        </div>
+
+        <div class="invima-box">
+          <h4>🏛️ Normativa, Salubridad e INVIMA:</h4>
+          <ul>
+            <li><b>Cosmética Natural:</b> NSO Sanitaria INVIMA (Capítulo Cosméticos y Dermograsas).</li>
+            <li><b>Salubridad:</b> Análisis micotoxicológico de la materia prima.</li>
+            <li><b>Rotulado:</b> Etiquetado INCI de los ingredientes del extracto.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. CAFÉ -->
+    <div class="card-idea" data-fruit="Café (Cáscara/Cisco)">
+      <div>
+        <span class="fruit-badge">☕ Café (Cáscara/Cisco)</span>
+        <h3 class="idea-title">Infusión Antioxidante de Cáscara y Exfoliantes</h3>
+        <p class="idea-desc">Aprovechamiento de la pulpa deshidratada para infusiones ricas en cafeína o como granulado exfoliante anticorporal.</p>
+
+        <div class="section-box">
+          <h4>⚙️ Proceso de Elaboración:</h4>
+          <ul>
+            <li>Deshidratación solar o mecánica controlada bajo el 10% de humedad.</li>
+            <li>Clasificación por tamizado industrial.</li>
+            <li>Envasado hermético con barrera contra humedad y luz solar.</li>
+          </ul>
+        </div>
+
+        <div class="invima-box">
+          <h4>🏛️ Normativa, Salubridad e INVIMA:</h4>
+          <ul>
+            <li><b>Bebidas / Té:</b> Permiso / Notificación Sanitaria INVIMA (PSA / NSA).</li>
+            <li><b>Salubridad:</b> Ausencia de Ocratoxina A (Paso de secado crítico).</li>
+            <li><b>Loteado:</b> Trazabilidad de finca según Buenas Prácticas Agrícolas (BPA).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. BANANO -->
+    <div class="card-idea" data-fruit="Banano / Plátano">
+      <div>
+        <span class="fruit-badge">🍌 Banano / Plátano</span>
+        <h3 class="idea-title">Harina de Cáscara y Placas de Fibra Vegetal</h3>
+        <p class="idea-desc">Transformación de cáscaras verdes en harina alta en fibra dietaria o prensado térmico para fabricación de platos desechables.</p>
+
+        <div class="section-box">
+          <h4>⚙️ Proceso de Elaboración:</h4>
+          <ul>
+            <li>Desinfección en tina con ácido cítrico al 1%.</li>
+            <li>Secado en túnel térmico y molienda fina ultra-centrífuga.</li>
+            <li>Prensado a alta temperatura para aglomerado de fibra.</li>
+          </ul>
+        </div>
+
+        <div class="invima-box">
+          <h4>🏛️ Normativa, Salubridad e INVIMA:</h4>
+          <ul>
+            <li><b>Alimentos:</b> Registro Sanitario INVIMA para harinas e insumos funcionales.</li>
+            <li><b>Salubridad:</b> Control de trazas de pesticidas en corteza exterior.</li>
+            <li><b>Certificación:</b> Pruebas de biodegradabilidad ASTM D6400.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </main>
+
+<footer>
+<div class="container">
+  <small>© 2026 EcoMatch. Plataforma de Revalorización Orgánica.</small>
+</div>
+</footer>
+
+<script>
+function filterIdeas() {
+  const selected = document.getElementById('fruit-selector').value;
+  const cards = document.querySelectorAll('.card-idea');
+
+  cards.forEach(card => {
+    const fruit = card.getAttribute('data-fruit');
+    if (selected === 'todos' || fruit === selected) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+
 </body>
 </html>
