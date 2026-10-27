@@ -34,9 +34,9 @@ nav a:hover{color:var(--green)}
 .hero-market p{color:#dff6e9;font-size:16px;max-width:650px}
 
 .market-controls{display:flex;gap:15px;margin:30px 0 20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.search-box{flex:1;min-width:280px;display:flex;gap:10px}
-.search-box input, .filter-select select, .form-control{width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--line);font-family:inherit;font-weight:500;font-size:14px;outline:none}
-.search-box input:focus, .filter-select select:focus, .form-control:focus{border-color:var(--green)}
+.search-box{flex:1;min-width:280px;display:flex;gap:10px;flex-wrap:wrap}
+.filter-select select, .form-control{width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--line);font-family:inherit;font-weight:500;font-size:14px;outline:none;background:#fff}
+.filter-select select:focus, .form-control:focus{border-color:var(--green)}
 
 .market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-bottom:60px}
 .card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between;transition:transform .2s, box-shadow .2s}
@@ -76,7 +76,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 <section class="hero-market">
   <div class="container">
     <h1>🤝 Marketplace Directo de Biomasa</h1>
-    <p>Conecta generadores de residuos orgánicos con industrias de valorización, cosmética y bioplásticos sin intermediarios.</p>
+    <p>Plataforma integral de negociación interna: publica, recibe ofertas y transacciona dentro de EcoMatch.</p>
   </div>
 </section>
 
@@ -84,10 +84,10 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
   
   <div class="market-controls">
     <div class="search-box">
-      <input type="text" id="search-input" placeholder="🔍 Buscar por ciudad o residuo..." onkeyup="filterOffers()">
-      <div class="filter-select">
+      <!-- Filtro Desplegable de Fruta -->
+      <div class="filter-select" style="flex:1">
         <select id="fruit-filter" onchange="filterOffers()">
-          <option value="todos">Todas las Frutas</option>
+          <option value="todos">Todas las Frutas / Biomasas</option>
           <option value="Cítricos / Naranja">Cítricos / Naranja</option>
           <option value="Piña">Piña</option>
           <option value="Aguacate Hass">Aguacate Hass</option>
@@ -98,25 +98,41 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
           <option value="Café (Cáscara/Cisco)">Café (Cáscara/Cisco)</option>
         </select>
       </div>
+
+      <!-- Filtro Desplegable de Ciudad -->
+      <div class="filter-select" style="flex:1">
+        <select id="city-filter" onchange="filterOffers()">
+          <option value="todos">Todas las Ciudades</option>
+          <option value="Armenia, Quindío">Armenia, Quindío</option>
+          <option value="Bogotá, D.C.">Bogotá, D.C.</option>
+          <option value="Medellín, Antioquia">Medellín, Antioquia</option>
+          <option value="Cali, Valle del Cauca">Cali, Valle del Cauca</option>
+          <option value="Bucaramanga, Santander">Bucaramanga, Santander</option>
+          <option value="Pereira, Risaralda">Pereira, Risaralda</option>
+          <option value="Manizales, Caldas">Manizales, Caldas</option>
+          <option value="Ibagué, Tolima">Ibagué, Tolima</option>
+          <option value="Neiva, Huila">Neiva, Huila</option>
+        </select>
+      </div>
     </div>
     <button class="btn btn-primary" onclick="openModal()">➕ Publicar Mi Lote</button>
   </div>
 
-  <!-- Contenedor de Tarjetas Cargadas desde Firebase -->
+  <!-- Contenedor de Tarjetas en Tiempo Real -->
   <div class="market-grid" id="market-grid">
     <p id="loading-msg" style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">Cargando ofertas en tiempo real...</p>
   </div>
 </main>
 
-<!-- Modal Publicar Oferta -->
+<!-- Modal 1: Publicar Lote (Solo Selecciones Desplegables y Números) -->
 <div class="modal" id="publish-modal">
   <div class="modal-content">
     <h3 style="margin-bottom:15px;color:var(--dark)">➕ Publicar Lote de Residuo</h3>
     <form onsubmit="saveOfferToDatabase(event)">
       
-      <!-- Selección Desplegable Obligatoria de Fruta / Residuo -->
+      <!-- Desplegable Frutas -->
       <div class="form-group">
-        <label>Selecciona el Tipo de Fruta / Biomasa</label>
+        <label>Tipo de Fruta / Biomasa</label>
         <select id="form-fruit" class="form-control" required>
           <option value="" disabled selected>-- Selecciona una opción --</option>
           <option value="Cítricos / Naranja">Cítricos / Naranja</option>
@@ -130,29 +146,70 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
         </select>
       </div>
 
+      <!-- Desplegable Ciudades -->
       <div class="form-group">
-        <label>Ubicación (Ciudad y Departamento)</label>
-        <input type="text" id="form-location" class="form-control" placeholder="Ej: Armenia, Quindío" required>
+        <label>Ciudad y Departamento</label>
+        <select id="form-location" class="form-control" required>
+          <option value="" disabled selected>-- Selecciona la ciudad --</option>
+          <option value="Armenia, Quindío">Armenia, Quindío</option>
+          <option value="Bogotá, D.C.">Bogotá, D.C.</option>
+          <option value="Medellín, Antioquia">Medellín, Antioquia</option>
+          <option value="Cali, Valle del Cauca">Cali, Valle del Cauca</option>
+          <option value="Bucaramanga, Santander">Bucaramanga, Santander</option>
+          <option value="Pereira, Risaralda">Pereira, Risaralda</option>
+          <option value="Manizales, Caldas">Manizales, Caldas</option>
+          <option value="Ibagué, Tolima">Ibagué, Tolima</option>
+          <option value="Neiva, Huila">Neiva, Huila</option>
+        </select>
       </div>
 
+      <!-- Solo Entrada Numérica -->
       <div class="form-group">
         <label>Volumen Disponible (kg)</label>
-        <input type="number" id="form-volume" class="form-control" placeholder="Ej: 300" required>
+        <input type="number" min="1" step="1" id="form-volume" class="form-control" placeholder="Ej: 500" required>
       </div>
 
+      <!-- Solo Entrada Numérica / Decimal -->
       <div class="form-group">
         <label>Precio Solicitado por kg (USD)</label>
-        <input type="text" id="form-price" class="form-control" placeholder="Ej: 0.90" required>
-      </div>
-
-      <div class="form-group">
-        <label>Número de WhatsApp de Contacto</label>
-        <input type="tel" id="form-phone" class="form-control" placeholder="Ej: 573001234567" required>
+        <input type="number" min="0.01" step="0.01" id="form-price" class="form-control" placeholder="Ej: 0.85" required>
       </div>
 
       <div style="display:flex;gap:10px;margin-top:20px">
         <button type="button" class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancelar</button>
         <button type="submit" id="btn-submit" class="btn btn-primary" style="flex:1">Publicar Ahora</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 2: Negociación / Transacción Interna -->
+<div class="modal" id="deal-modal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:10px;color:var(--dark)">💼 Enviar Oferta de Compra Interna</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:15px;" id="deal-subtitle">Negociación en plataforma</p>
+    
+    <form onsubmit="submitInternalDeal(event)">
+      <input type="hidden" id="deal-doc-id">
+      
+      <div class="form-group">
+        <label>Tu Cantidad Requerida (kg)</label>
+        <input type="number" min="1" step="1" id="deal-volume" class="form-control" placeholder="Ej: 200" required>
+      </div>
+
+      <div class="form-group">
+        <label>Tu Contraoferta por kg (USD)</label>
+        <input type="number" min="0.01" step="0.01" id="deal-price" class="form-control" placeholder="Ej: 0.80" required>
+      </div>
+
+      <div class="form-group">
+        <label>Mensaje Interno para el Vendedor</label>
+        <textarea id="deal-msg" class="form-control" rows="3" placeholder="Ej: Requiero la entrega para esta semana en planta procesamiento..." required></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button type="button" class="btn btn-outline" style="flex:1" onclick="closeDealModal()">Cancelar</button>
+        <button type="submit" id="btn-deal-submit" class="btn btn-primary" style="flex:1">Enviar Negociación</button>
       </div>
     </form>
   </div>
@@ -165,7 +222,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
 </footer>
 
 <script>
-// 1. Configuración de Firebase con tus claves reales
+// 1. Credenciales Reales de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBBkkkzxL50ikszUxoieH3vImoY4WXFzao",
   authDomain: "ecomatch-b5e42.firebaseapp.com",
@@ -176,36 +233,39 @@ const firebaseConfig = {
   measurementId: "G-GH2PEQERB2"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 2. Escuchar cambios en la base de datos en tiempo real
+// 2. Cargar Ofertas en Tiempo Real
 db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
   const grid = document.getElementById('market-grid');
   grid.innerHTML = "";
 
   if (snapshot.empty) {
-    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;">No hay ofertas publicadas aún. ¡Sé el primero en publicar!</p>';
+    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;">No hay lotes disponibles. ¡Sé el primero en publicar!</p>';
     return;
   }
 
   snapshot.forEach((doc) => {
     const data = doc.data();
+    const docId = doc.id;
+
     const cardHTML = `
-      <div class="card" data-fruit="${data.fruit}" data-text="${data.fruit.toLowerCase()} ${data.location.toLowerCase()}">
+      <div class="card" data-fruit="${data.fruit}" data-city="${data.location}">
         <div>
           <span class="card-tag">Disponible</span>
           <h3 class="card-title">Lote de ${data.fruit}</h3>
           <div class="card-info">
             <div>📍 <b>Ubicación:</b> ${data.location}</div>
-            <div>📦 <b>Volumen:</b> ${data.volume} kg disponibles</div>
-            <div>🏬 <b>Vendedor:</b> Usuario EcoMatch</div>
+            <div>📦 <b>Volumen:</b> ${Number(data.volume).toLocaleString()} kg</div>
+            <div>🏭 <b>ID Vendedor:</b> ${data.sellerId || 'USR-ANONIMO'}</div>
           </div>
         </div>
         <div>
-          <div class="card-price">$${data.price} USD <span>/ kg</span></div>
-          <a href="https://wa.me/${data.phone}?text=Hola,%20estoy%20interesado%20en%20el%20lote%20de%20${encodeURIComponent(data.fruit)}" target="_blank" class="btn btn-outline" style="width:100%">📲 Contactar Vendedor</a>
+          <div class="card-price">$${Number(data.price).toFixed(2)} USD <span>/ kg</span></div>
+          <button class="btn btn-outline" style="width:100%" onclick="openDealModal('${docId}', '${data.fruit}', '${data.price}')">
+            💼 Iniciar Negociación Interna
+          </button>
         </div>
       </div>
     `;
@@ -213,10 +273,10 @@ db.collection("ofertas").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
   });
 }, (error) => {
   console.error("Error al cargar la base de datos:", error);
-  document.getElementById('market-grid').innerHTML = '<p style="color:red;grid-column:1/-1;text-align:center;">Error al conectar con la base de datos.</p>';
+  document.getElementById('market-grid').innerHTML = '<p style="color:red;grid-column:1/-1;text-align:center;">Error de conexión con Firestore.</p>';
 });
 
-// 3. Guardar nueva oferta en la base de datos
+// 3. Guardar Lote (Publicación)
 async function saveOfferToDatabase(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-submit');
@@ -224,14 +284,15 @@ async function saveOfferToDatabase(e) {
   btn.innerText = "Guardando...";
 
   const selectedFruit = document.getElementById('form-fruit').value;
+  const selectedCity = document.getElementById('form-location').value;
 
   const newOffer = {
     title: `Lote de ${selectedFruit}`,
     fruit: selectedFruit,
-    location: document.getElementById('form-location').value,
-    volume: document.getElementById('form-volume').value,
-    price: document.getElementById('form-price').value,
-    phone: document.getElementById('form-phone').value,
+    location: selectedCity,
+    volume: parseFloat(document.getElementById('form-volume').value),
+    price: parseFloat(document.getElementById('form-price').value),
+    sellerId: "USR-" + Math.floor(1000 + Math.random() * 9000), // Simula ID para futura Auth
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -239,34 +300,71 @@ async function saveOfferToDatabase(e) {
     await db.collection("ofertas").add(newOffer);
     closeModal();
     e.target.reset();
-    alert('¡Tu lote ha sido guardado con éxito en la base de datos!');
+    alert('¡Lote publicado con éxito en EcoMatch!');
   } catch (err) {
-    alert('Error al guardar la oferta: ' + err.message);
+    alert('Error al guardar: ' + err.message);
   } finally {
     btn.disabled = false;
     btn.innerText = "Publicar Ahora";
   }
 }
 
-// 4. Filtrado en interfaz
+// 4. Enviar Transacción / Negociación Interna
+async function submitInternalDeal(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-deal-submit');
+  btn.disabled = true;
+  btn.innerText = "Enviando...";
+
+  const dealData = {
+    loteId: document.getElementById('deal-doc-id').value,
+    buyerVolume: parseFloat(document.getElementById('deal-volume').value),
+    offeredPrice: parseFloat(document.getElementById('deal-price').value),
+    message: document.getElementById('deal-msg').value,
+    status: "PENDIENTE",
+    buyerId: "BUYER-" + Math.floor(1000 + Math.random() * 9000), // Simula ID del Comprador
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  try {
+    await db.collection("transacciones").add(dealData);
+    closeDealModal();
+    e.target.reset();
+    alert('¡Propuesta de compra enviada con éxito al vendedor dentro de EcoMatch!');
+  } catch (err) {
+    alert('Error al procesar la solicitud: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Enviar Negociación";
+  }
+}
+
+// 5. Filtros
 function filterOffers() {
-  const query = document.getElementById('search-input').value.toLowerCase();
   const selectedFruit = document.getElementById('fruit-filter').value;
+  const selectedCity = document.getElementById('city-filter').value;
   const cards = document.querySelectorAll('.card');
 
   cards.forEach(card => {
-    const text = card.getAttribute('data-text').toLowerCase();
     const fruit = card.getAttribute('data-fruit');
+    const city = card.getAttribute('data-city');
 
-    const matchesSearch = text.includes(query);
     const matchesFruit = (selectedFruit === 'todos' || fruit === selectedFruit);
+    const matchesCity = (selectedCity === 'todos' || city === selectedCity);
 
-    card.style.display = (matchesSearch && matchesFruit) ? 'flex' : 'none';
+    card.style.display = (matchesFruit && matchesCity) ? 'flex' : 'none';
   });
 }
 
 function openModal() { document.getElementById('publish-modal').classList.add('show'); }
 function closeModal() { document.getElementById('publish-modal').classList.remove('show'); }
+
+function openDealModal(docId, fruit, price) {
+  document.getElementById('deal-doc-id').value = docId;
+  document.getElementById('deal-subtitle').innerText = `Proponiendo compra para: Lote de ${fruit} ($${price} USD/kg)`;
+  document.getElementById('deal-modal').classList.add('show');
+}
+function closeDealModal() { document.getElementById('deal-modal').classList.remove('show'); }
 </script>
 
 </body>
