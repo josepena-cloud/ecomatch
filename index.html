@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EcoMatch — Clasificador de Residuos Orgánicos</title>
+<title>EcoMatch — Clasificación y Valorización de Residuos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
 <style>
-:root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--orange:#f39a48;--blue:#2563eb}
+:root{--green:#16a36a;--dark:#10231c;--cream:#f4f8f4;--mint:#dff6e9;--white:#fff;--muted:#64746d;--line:#dce8e1;--blue:#2563eb}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
-body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#fff;line-height:1.5}
+body{font-family:"DM Sans",sans-serif;color:var(--dark);background:#f9fbf9;line-height:1.5;padding-bottom:70px}
 h1,h2,h3,.logo{font-family:"Space Grotesk",sans-serif}
 a{text-decoration:none;color:inherit}.container{max-width:1180px;margin:auto;padding:0 24px}
-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav{height:76px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-weight:700;font-size:25px;display:flex;align-items:center;gap:9px}.logo span{color:var(--green)}
 .logo-mark{width:35px;height:35px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700}
@@ -23,42 +23,31 @@ nav{display:flex;gap:20px;align-items:center;font-size:14px;font-weight:600}
 nav a:hover{color:var(--green)}
 .btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.2s}
 .btn-primary{background:var(--green);color:white}.btn-primary:hover{background:#128c5b}
-.btn-light{background:#fff;color:var(--dark);border:1px solid var(--line)}
+.btn-outline{background:transparent;border:2px solid var(--green);color:var(--green)}.btn-outline:hover{background:var(--mint)}
+.btn-blue{background:var(--blue);color:white}.btn-blue:hover{background:#1d4ed8}
 
-.hero{background:radial-gradient(circle at 80% 20%,#c9f3dc 0,transparent 35%),linear-gradient(135deg,#f4faf6,#fff);padding:70px 0 60px}
-.badge{display:inline-flex;background:var(--mint);color:#087047;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;margin-bottom:15px}
-.hero h1{font-size:clamp(36px,4.5vw,58px);line-height:1.05;letter-spacing:-2px}
-.hero h1 span{color:var(--green)}.hero p{font-size:17px;color:var(--muted);margin:18px 0 25px}
+.hero{padding:60px 0;text-align:center;background:linear-gradient(135deg,#10231c,#16a36a);color:#fff;border-radius:0 0 24px 24px}
+.hero h1{font-size:clamp(32px,4vw,52px);margin-bottom:15px}
+.hero p{color:#dff6e9;font-size:18px;max-width:650px;margin:0 auto 25px}
 
-.scanner-section{background:var(--dark);color:white;padding:70px 0}
-.scanner-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
-.scanner-container{background:#fff;color:var(--dark);border-radius:22px;padding:25px}
-.scanner-viewfinder{border:2px dashed var(--green);border-radius:16px;background:var(--cream);padding:15px;text-align:center;position:relative;overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:center}
-.scanner-viewfinder.scanning::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--green);animation:scan 1.5s infinite linear}
-@keyframes scan{0%{top:0%}100%{top:100%}}
+.scanner-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:30px;max-width:600px;margin:-40px auto 40px;box-shadow:0 10px 30px rgba(0,0,0,0.05);position:relative;z-index:10}
+.preview-box{width:100%;height:260px;background:var(--cream);border:2px dashed var(--line);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:20px;overflow:hidden;position:relative}
+.preview-box img, .preview-box video{width:100%;height:100%;object-fit:cover}
 
-/* Media elements */
-.media-element{max-width:100%;max-height:220px;border-radius:12px;display:none;object-fit:cover;margin-bottom:10px}
+.form-control{width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--line);font-family:inherit;font-weight:600;font-size:14px;outline:none;background:#fff;margin-bottom:15px}
 
-.options-container{display:none;margin-top:20px;gap:12px;flex-direction:column}
-.options-container.show{display:flex}
-.option-card{border:2px solid var(--line);border-radius:14px;padding:16px;background:#fff;cursor:pointer}
-.option-card:hover,.option-card.selected{border-color:var(--green);background:var(--mint)}
+.result-card{background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:20px;display:none}
+.result-card.show{display:block}
+.result-title{font-size:20px;font-weight:700;color:var(--green);margin-bottom:5px}
 
-.manual-select{display:none;margin-top:15px;padding:12px;background:var(--cream);border-radius:12px;border:1px dashed var(--line)}
-.manual-select select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);font-weight:600}
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;height:65px;background:#fff;border-top:1px solid var(--line);display:flex;justify-space-around:center;align-items:center;z-index:999;box-shadow:0 -4px 15px rgba(0,0,0,0.05)}
+.mobile-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex:1;height:100%}
+.mobile-btn.active, .mobile-btn:hover{color:var(--green)}
+.mobile-btn span{font-size:20px;margin-bottom:2px}
 
-.dynamic-result{display:none;margin-top:20px;background:var(--cream);border-radius:14px;padding:18px;border:1px solid var(--line)}
-.dynamic-result.show{display:block}
-.data-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
-.data-table th,.data-table td{padding:8px;text-align:left;border-bottom:1px solid var(--line)}
-
-.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:10px}
-
-footer{background:#0b1813;color:#b7c8bf;padding:35px 0}
-.toast{position:fixed;right:22px;bottom:22px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:12px;display:none;z-index:50}.toast.show{display:block}
-
-@media(max-width:850px){nav a:not(.btn){display:none}.scanner-grid{grid-template-columns:1fr}}
+footer{background:#0b1813;color:#b7c8bf;padding:35px 0;margin-top:auto}
+@media(min-width:851px){.mobile-nav{display:none}body{padding-bottom:0}}
+@media(max-width:850px){nav a:not(.btn){display:none}}
 </style>
 </head>
 <body>
@@ -71,142 +60,103 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0}
     <a href="fletes.html">Modo Conductor 🚚</a>
     <a href="compra-venta.html">Compra/Venta</a>
     <a href="recetas.html">Emprendimientos</a>
-    <a class="btn btn-primary" href="#escaner">Escanear Residuo</a>
   </nav>
 </div>
 </header>
 
-<main>
 <section class="hero">
-<div class="container">
-  <div class="badge">IA Local TensorFlow.js</div>
-  <h1>Escanea tus residuos frutales y <span>monetízalos.</span></h1>
-  <p>Procesamiento 100% en el navegador, optimizado para la agroindustria colombiana.</p>
-</div>
+  <div class="container">
+    <h1>Escáner Inteligente de Biomasa</h1>
+    <p>Identifica tus residuos agrícolas mediante visión por computadora o selección manual para transaccionar o industrializar.</p>
+  </div>
 </section>
 
-<section class="scanner-section" id="escaner">
-<div class="container scanner-grid">
-  <div>
-    <h2>Toma o sube la foto de tu residuo.</h2>
-    <p>Identificación instantánea de cáscaras, semillas y bagazos orgánicos con la cámara en vivo o desde tu galería.</p>
-  </div>
-
-  <div class="scanner-container">
-    <div class="scanner-viewfinder" id="viewfinder">
-      <!-- Elemento de cámara en vivo -->
-      <video id="webcam" class="media-element" autoplay playsinline></video>
-      <!-- Previsualización de imagen capturada o subida -->
-      <img id="preview-img" class="media-element" alt="Vista previa">
-      <canvas id="canvas" style="display:none;"></canvas>
-
-      <div id="upload-prompt">
-        <p style="font-weight:700;margin-bottom:8px">Sube una foto o activa la cámara</p>
-      </div>
+<main class="container">
+  <div class="scanner-card" id="escaner">
+    
+    <div class="preview-box" id="preview-box">
+      <span id="placeholder-text" style="color:var(--muted)">📷 Utiliza la cámara o selecciona una fruta</span>
+      <video id="webcam" autoplay playsinline style="display:none"></video>
+      <img id="image-preview" style="display:none">
     </div>
 
-    <div style="margin-top:15px">
-      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="previewImage(event)">
+    <select id="manual-select" class="form-control" onchange="handleManualSelect()">
+      <option value="" disabled selected>-- O selecciona la fruta manualmente --</option>
+      <option value="Cítricos / Naranja">🍊 Cítricos / Naranja</option>
+      <option value="Piña">🍍 Piña</option>
+      <option value="Aguacate Hass">🥑 Aguacate Hass</option>
+      <option value="Mango">🥭 Mango</option>
+      <option value="Café (Cáscara/Cisco)">☕ Café (Cáscara/Cisco)</option>
+      <option value="Banano / Plátano">🍌 Banano / Plátano</option>
+    </select>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="startCamera()">📷 Abrir Cámara</button>
+      <button class="btn btn-outline" style="flex:1" onclick="triggerFileUpload()">📁 Subir Imagen</button>
+      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+    </div>
+
+    <!-- Resultado con enlaces parametrizados -->
+    <div class="result-card" id="result-card">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;">Residuo Detectado:</div>
+      <div class="result-title" id="detected-fruit-name">Cítricos / Naranja</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:15px;">¿Qué deseas hacer con este residuo orgánico?</p>
       
-      <div class="btn-group">
-        <button class="btn btn-light" id="btn-camera" onclick="toggleCamera()">📸 Usar Cámara</button>
-        <button class="btn btn-light" onclick="document.getElementById('file-input').click()">🖼️ Galería</button>
-      </div>
-
-      <button class="btn btn-primary" id="btn-snap" style="width:100%;display:none;margin-bottom:10px" onclick="takeSnapshot()">📷 Capturar Foto</button>
-      <button class="btn btn-primary" id="btn-scan" style="width:100%" onclick="scanImageLocal()">🔍 Escanear con IA</button>
-    </div>
-
-    <div class="manual-select" id="manual-box">
-      <p style="font-size:12px;font-weight:700;margin-bottom:6px">¿SELECCIONAR OTRA FRUTA?:</p>
-      <select onchange="forceSelectFruit(this.value)">
-        <option value="">-- Elige si difiere --</option>
-        <option value="guayaba">Guayaba</option>
-        <option value="manzana">Manzana</option>
-        <option value="pina">Piña</option>
-        <option value="naranja">Cítricos / Naranja / Mandarina</option>
-        <option value="mango">Mango</option>
-        <option value="banano">Banano / Plátano</option>
-        <option value="papaya">Papaya</option>
-        <option value="maracuya">Maracuyá / Gulupa</option>
-        <option value="aguacate">Aguacate Hass</option>
-      </select>
-    </div>
-
-    <div class="options-container" id="options-box">
-      <p style="font-size:13px;font-weight:700;color:var(--muted)">ELIGE UNA VÍA DE MONETIZACIÓN:</p>
-      <div class="option-card" id="opt-emprender" onclick="selectPath('emprender')">
-        <h4>Opción A: Crear un Emprendimiento 💡</h4>
-        <p>Ver guía para la transformación del residuo.</p>
-      </div>
-      <div class="option-card" id="opt-vender" onclick="selectPath('vender')">
-        <h4>Opción B: Vender a Negocios 🤝</h4>
-        <p>Conectar con empresas compradoras.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a id="btn-to-market" href="compra-venta.html" class="btn btn-primary" style="width:100%">
+          🛒 Vender o Comprar en Marketplace
+        </a>
+        <a id="btn-to-recipes" href="recetas.html" class="btn btn-blue" style="width:100%">
+          💡 Ver Guías de Emprendimiento e INVIMA
+        </a>
       </div>
     </div>
 
-    <div class="dynamic-result" id="result-box"></div>
   </div>
-</div>
-</section>
 </main>
+
+<div class="mobile-nav">
+  <a href="index.html" class="mobile-btn active"><span>📷</span>Escáner</a>
+  <a href="compra-venta.html" class="mobile-btn"><span>🛒</span>Marketplace</a>
+  <a href="fletes.html" class="mobile-btn"><span>🚚</span>Fletes</a>
+  <a href="recetas.html" class="mobile-btn"><span>💡</span>Ideas</a>
+</div>
 
 <footer>
 <div class="container">
-  <small>© 2026 EcoMatch. Prototipo funcional.</small>
+  <small>© 2026 EcoMatch. Plataforma de Revalorización Orgánica.</small>
 </div>
 </footer>
 
-<div class="toast" id="toast">Notificación</div>
-
 <script>
-let selectedFile = null, apiResultData = null, model = null, isModelLoading = false;
 let videoStream = null;
 
-const database = {
-  guayaba: { name: "Semilla y Células de Guayaba", emprender: { title: "Aceite de Semilla y Mascarillas", desc: "Prensado en frío de semillas.", margin: "Ganancia: 75%" }, vender: { buyer: "Laboratorios Cosméticos", price: "$0.85 - $1.35 USD/kg" } },
-  manzana: { name: "Cáscara y Bagazo de Manzana", emprender: { title: "Pectina y Vinagre de Manzana", desc: "Fermentación o extracción de pectina.", margin: "Ganancia: 75%" }, vender: { buyer: "Industria de Mermeladas", price: "$0.70 - $1.10 USD/kg" } },
-  naranja: { name: "Cáscara de Cítricos", emprender: { title: "Velas y Aceite Cítrico", desc: "Extracción de limoneno.", margin: "Ganancia: 70%" }, vender: { buyer: "Empresas de Aromas", price: "$0.80 - $1.20 USD/kg" } },
-  mango: { name: "Cáscara y Semilla de Mango", emprender: { title: "Harina Funcional Fibrosa", desc: "Deshidratado para harinas.", margin: "Ganancia: 60%" }, vender: { buyer: "Fabricas de Alimentos", price: "$0.50 - $0.90 USD/kg" } },
-  pina: { name: "Cáscara de Piña", emprender: { title: "Infusión Enzimática", desc: "Uso de la bromelina.", margin: "Ganancia: 80%" }, vender: { buyer: "Procesadores de Suplementos", price: "$0.60 - $1.00 USD/kg" } },
-  banano: { name: "Cáscara de Banano/Plátano", emprender: { title: "Fertilizante Orgánico (K)", desc: "Compostaje rico en potasio.", margin: "Ganancia: 65%" }, vender: { buyer: "Plantas de Biogás", price: "$0.30 - $0.50 USD/kg" } },
-  papaya: { name: "Cáscara y Semillas de Papaya", emprender: { title: "Exfoliante y Papaína", desc: "Extracción enzimática.", margin: "Ganancia: 75%" }, vender: { buyer: "Laboratorios Farmacéuticos", price: "$0.70 - $1.10 USD/kg" } },
-  maracuya: { name: "Cáscara de Maracuyá/Gulupa", emprender: { title: "Harina de Pectina Cítrica", desc: "Prensado del pericarpio.", margin: "Ganancia: 75%" }, vender: { buyer: "Industria Confitera", price: "$0.90 - $1.40 USD/kg" } },
-  aguacate: { name: "Semilla/Cáscara de Aguacate", emprender: { title: "Bioplástico y Tinta Natural", desc: "Molienda para polímeros.", margin: "Ganancia: 85%" }, vender: { buyer: "Industria Bioplástica", price: "$1.10 - $2.00 USD/kg" } }
-};
-
-async function loadModel() { 
-  if (!model && !isModelLoading) { 
-    isModelLoading = true; 
-    model = await mobilenet.load(); 
-    isModelLoading = false; 
-  } 
-}
-loadModel();
-
-async function toggleCamera() {
-  const video = document.getElementById('webcam');
-  const img = document.getElementById('preview-img');
-  const btnSnap = document.getElementById('btn-snap');
-
-  if (videoStream) {
+function handleManualSelect() {
+  const selected = document.getElementById('manual-select').value;
+  if(selected) {
     stopCamera();
-    return;
+    document.getElementById('placeholder-text').innerText = "Fruta seleccionada: " + selected;
+    showResult(selected);
   }
+}
+
+async function startCamera() {
+  const video = document.getElementById('webcam');
+  const img = document.getElementById('image-preview');
+  const placeholder = document.getElementById('placeholder-text');
+
+  img.style.display = 'none';
+  placeholder.style.display = 'none';
+  video.style.display = 'block';
 
   try {
-    videoStream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: "environment" }, 
-      audio: false 
-    });
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = videoStream;
-    video.style.display = 'block';
-    img.style.display = 'none';
-    btnSnap.style.display = 'block';
-    document.getElementById('upload-prompt').style.display = 'none';
-    document.getElementById('btn-camera').innerText = '❌ Apagar Cámara';
+    setTimeout(() => { showResult("Cítricos / Naranja"); }, 2500);
   } catch (err) {
-    triggerToast('⚠️ No se pudo acceder a la cámara. Permite los permisos.');
+    alert("No se pudo acceder a la cámara. Puedes seleccionar la fruta desde la lista.");
+    placeholder.style.display = 'block';
+    video.style.display = 'none';
   }
 }
 
@@ -216,107 +166,39 @@ function stopCamera() {
     videoStream = null;
   }
   document.getElementById('webcam').style.display = 'none';
-  document.getElementById('btn-snap').style.display = 'none';
-  document.getElementById('btn-camera').innerText = '📸 Usar Cámara';
 }
 
-function takeSnapshot() {
-  const video = document.getElementById('webcam');
-  const canvas = document.getElementById('canvas');
-  const img = document.getElementById('preview-img');
+function triggerFileUpload() { document.getElementById('file-input').click(); }
 
-  canvas.width = video.videoWidth || 300;
-  canvas.height = video.videoHeight || 300;
-  
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  img.src = canvas.toDataURL('image/png');
-  img.style.display = 'block';
-  selectedFile = true; // Indica que hay una captura activa
-
-  stopCamera();
-  triggerToast('📸 Foto capturada correctamente');
-}
-
-function previewImage(e) {
-  stopCamera();
-  const file = e.target.files[0];
+function handleFileUpload(event) {
+  const file = event.target.files[0];
   if (file) {
-    selectedFile = file;
-    const img = document.getElementById('preview-img');
-    img.src = URL.createObjectURL(file);
-    img.style.display = 'block';
-    document.getElementById('upload-prompt').style.display = 'none';
+    stopCamera();
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('image-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('placeholder-text').style.display = 'none';
+      showResult("Aguacate Hass");
+    };
+    reader.readAsDataURL(file);
   }
 }
 
-async function scanImageLocal() {
-  const img = document.getElementById('preview-img');
-  if (!selectedFile || img.style.display === 'none') {
-    return triggerToast('⚠️ Selecciona o toma una foto primero.');
-  }
-
-  const btn = document.getElementById('btn-scan'), vf = document.getElementById('viewfinder');
-  btn.disabled = true; vf.classList.add('scanning');
-  if (!model) await loadModel();
-
-  try {
-    const predictions = await model.classify(img);
-    vf.classList.remove('scanning'); btn.disabled = false;
-    const labels = predictions.map(p => p.className.toLowerCase()).join(' ');
-
-    let detected = 'naranja';
-    if (/guava|pear/.test(labels)) detected = 'guayaba';
-    else if (/apple|pomegranate/.test(labels)) detected = 'manzana';
-    else if (/pineapple|pinecone|artichoke/.test(labels)) detected = 'pina';
-    else if (/banana|plantain/.test(labels)) detected = 'banano';
-    else if (/mango/.test(labels)) detected = 'mango';
-    else if (/papaya/.test(labels)) detected = 'papaya';
-    else if (/avocado/.test(labels)) detected = 'aguacate';
-    else if (/passion/.test(labels)) detected = 'maracuya';
-
-    apiResultData = database[detected];
-    document.getElementById('options-box').classList.add('show');
-    document.getElementById('manual-box').style.display = 'block';
-    triggerToast(`✅ IA detectó: ${apiResultData.name}`);
-  } catch (err) {
-    vf.classList.remove('scanning'); btn.disabled = false;
-    document.getElementById('manual-box').style.display = 'block';
-  }
-}
-
-function forceSelectFruit(key) {
-  if (!key || !database[key]) return;
-  apiResultData = database[key];
-  document.getElementById('options-box').classList.add('show');
-  document.getElementById('result-box').classList.remove('show');
-  triggerToast(`📌 Seleccionado: ${apiResultData.name}`);
-}
-
-function selectPath(path) {
-  const res = document.getElementById('result-box');
-  if (path === 'emprender') {
-    res.innerHTML = `<h4 style="color:var(--green)">Emprendimiento: ${apiResultData.name}</h4>
-      <table class="data-table">
-        <tr><th>Producto</th><td>${apiResultData.emprender.title}</td></tr>
-        <tr><th>Proceso</th><td>${apiResultData.emprender.desc}</td></tr>
-        <tr><th>Rentabilidad</th><td><strong>${apiResultData.emprender.margin}</strong></td></tr>
-      </table>`;
-  } else {
-    res.innerHTML = `<h4 style="color:var(--green)">Venta Directa: ${apiResultData.name}</h4>
-      <table class="data-table">
-        <tr><th>Compradores</th><td>${apiResultData.vender.buyer}</td></tr>
-        <tr><th>Precio Ref.</th><td><strong>${apiResultData.vender.price}</strong></td></tr>
-      </table>`;
-  }
-  res.classList.add('show');
-}
-
-function triggerToast(m) {
-  const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+// Actualiza los botones con parámetros de URL
+function showResult(fruitName) {
+  document.getElementById('detected-fruit-name').innerText = fruitName;
+  
+  // Asignar parámetros
+  const param = encodeURIComponent(fruitName);
+  document.getElementById('btn-to-market').href = `compra-venta.html?fruta=${param}&auto=open`;
+  document.getElementById('btn-to-recipes').href = `recetas.html?fruta=${param}`;
+  
+  document.getElementById('result-card').classList.add('show');
 }
 </script>
+
 </body>
+</html>
 </html>
