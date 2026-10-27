@@ -33,10 +33,12 @@ nav a:hover{color:var(--green)}
 .scanner-section{background:var(--dark);color:white;padding:70px 0}
 .scanner-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
 .scanner-container{background:#fff;color:var(--dark);border-radius:22px;padding:25px}
-.scanner-viewfinder{border:2px dashed var(--green);border-radius:16px;background:var(--cream);padding:25px;text-align:center;position:relative;overflow:hidden}
+.scanner-viewfinder{border:2px dashed var(--green);border-radius:16px;background:var(--cream);padding:15px;text-align:center;position:relative;overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:center}
 .scanner-viewfinder.scanning::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--green);animation:scan 1.5s infinite linear}
 @keyframes scan{0%{top:0%}100%{top:100%}}
-.scanner-img-preview{max-width:100%;height:180px;object-fit:cover;border-radius:12px;display:none;margin:0 auto 15px}
+
+/* Media elements */
+.media-element{max-width:100%;max-height:220px;border-radius:12px;display:none;object-fit:cover;margin-bottom:10px}
 
 .options-container{display:none;margin-top:20px;gap:12px;flex-direction:column}
 .options-container.show{display:flex}
@@ -50,6 +52,8 @@ nav a:hover{color:var(--green)}
 .dynamic-result.show{display:block}
 .data-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
 .data-table th,.data-table td{padding:8px;text-align:left;border-bottom:1px solid var(--line)}
+
+.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:10px}
 
 footer{background:#0b1813;color:#b7c8bf;padding:35px 0}
 .toast{position:fixed;right:22px;bottom:22px;background:var(--dark);color:#fff;padding:14px 18px;border-radius:12px;display:none;z-index:50}.toast.show{display:block}
@@ -84,21 +88,33 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0}
 <section class="scanner-section" id="escaner">
 <div class="container scanner-grid">
   <div>
-    <h2>Sube la foto de tu residuo frutal.</h2>
-    <p>Identificación de cáscaras, semillas y bagazos orgánicos.</p>
+    <h2>Toma o sube la foto de tu residuo.</h2>
+    <p>Identificación instantánea de cáscaras, semillas y bagazos orgánicos con la cámara en vivo o desde tu galería.</p>
   </div>
 
   <div class="scanner-container">
     <div class="scanner-viewfinder" id="viewfinder">
-      <img id="preview-img" class="scanner-img-preview" alt="Vista previa">
+      <!-- Elemento de cámara en vivo -->
+      <video id="webcam" class="media-element" autoplay playsinline></video>
+      <!-- Previsualización de imagen capturada o subida -->
+      <img id="preview-img" class="media-element" alt="Vista previa">
+      <canvas id="canvas" style="display:none;"></canvas>
+
       <div id="upload-prompt">
-        <p style="font-weight:700;margin-bottom:8px">Sube la foto del residuo</p>
+        <p style="font-weight:700;margin-bottom:8px">Sube una foto o activa la cámara</p>
       </div>
-      <div style="margin-top:15px">
-        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="previewImage(event)">
-        <button class="btn btn-light" style="width:100%;margin-bottom:10px" onclick="document.getElementById('file-input').click()">📷 Seleccionar Foto</button>
-        <button class="btn btn-primary" id="btn-scan" style="width:100%" onclick="scanImageLocal()">🔍 Escanear con IA</button>
+    </div>
+
+    <div style="margin-top:15px">
+      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="previewImage(event)">
+      
+      <div class="btn-group">
+        <button class="btn btn-light" id="btn-camera" onclick="toggleCamera()">📸 Usar Cámara</button>
+        <button class="btn btn-light" onclick="document.getElementById('file-input').click()">🖼️ Galería</button>
       </div>
+
+      <button class="btn btn-primary" id="btn-snap" style="width:100%;display:none;margin-bottom:10px" onclick="takeSnapshot()">📷 Capturar Foto</button>
+      <button class="btn btn-primary" id="btn-scan" style="width:100%" onclick="scanImageLocal()">🔍 Escanear con IA</button>
     </div>
 
     <div class="manual-select" id="manual-box">
@@ -145,6 +161,7 @@ footer{background:#0b1813;color:#b7c8bf;padding:35px 0}
 
 <script>
 let selectedFile = null, apiResultData = null, model = null, isModelLoading = false;
+let videoStream = null;
 
 const database = {
   guayaba: { name: "Semilla y Células de Guayaba", emprender: { title: "Aceite de Semilla y Mascarillas", desc: "Prensado en frío de semillas.", margin: "Ganancia: 75%" }, vender: { buyer: "Laboratorios Cosméticos", price: "$0.85 - $1.35 USD/kg" } },
@@ -158,27 +175,94 @@ const database = {
   aguacate: { name: "Semilla/Cáscara de Aguacate", emprender: { title: "Bioplástico y Tinta Natural", desc: "Molienda para polímeros.", margin: "Ganancia: 85%" }, vender: { buyer: "Industria Bioplástica", price: "$1.10 - $2.00 USD/kg" } }
 };
 
-async function loadModel() { if (!model && !isModelLoading) { isModelLoading = true; model = await mobilenet.load(); isModelLoading = false; } }
+async function loadModel() { 
+  if (!model && !isModelLoading) { 
+    isModelLoading = true; 
+    model = await mobilenet.load(); 
+    isModelLoading = false; 
+  } 
+}
 loadModel();
 
+async function toggleCamera() {
+  const video = document.getElementById('webcam');
+  const img = document.getElementById('preview-img');
+  const btnSnap = document.getElementById('btn-snap');
+
+  if (videoStream) {
+    stopCamera();
+    return;
+  }
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: "environment" }, 
+      audio: false 
+    });
+    video.srcObject = videoStream;
+    video.style.display = 'block';
+    img.style.display = 'none';
+    btnSnap.style.display = 'block';
+    document.getElementById('upload-prompt').style.display = 'none';
+    document.getElementById('btn-camera').innerText = '❌ Apagar Cámara';
+  } catch (err) {
+    triggerToast('⚠️ No se pudo acceder a la cámara. Permite los permisos.');
+  }
+}
+
+function stopCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+  document.getElementById('webcam').style.display = 'none';
+  document.getElementById('btn-snap').style.display = 'none';
+  document.getElementById('btn-camera').innerText = '📸 Usar Cámara';
+}
+
+function takeSnapshot() {
+  const video = document.getElementById('webcam');
+  const canvas = document.getElementById('canvas');
+  const img = document.getElementById('preview-img');
+
+  canvas.width = video.videoWidth || 300;
+  canvas.height = video.videoHeight || 300;
+  
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  img.src = canvas.toDataURL('image/png');
+  img.style.display = 'block';
+  selectedFile = true; // Indica que hay una captura activa
+
+  stopCamera();
+  triggerToast('📸 Foto capturada correctamente');
+}
+
 function previewImage(e) {
-  selectedFile = e.target.files[0];
-  if (selectedFile) {
+  stopCamera();
+  const file = e.target.files[0];
+  if (file) {
+    selectedFile = file;
     const img = document.getElementById('preview-img');
-    img.src = URL.createObjectURL(selectedFile);
+    img.src = URL.createObjectURL(file);
     img.style.display = 'block';
     document.getElementById('upload-prompt').style.display = 'none';
   }
 }
 
 async function scanImageLocal() {
-  if (!selectedFile) return triggerToast('⚠️ Selecciona una foto primero.');
+  const img = document.getElementById('preview-img');
+  if (!selectedFile || img.style.display === 'none') {
+    return triggerToast('⚠️ Selecciona o toma una foto primero.');
+  }
+
   const btn = document.getElementById('btn-scan'), vf = document.getElementById('viewfinder');
   btn.disabled = true; vf.classList.add('scanning');
   if (!model) await loadModel();
 
   try {
-    const predictions = await model.classify(document.getElementById('preview-img'));
+    const predictions = await model.classify(img);
     vf.classList.remove('scanning'); btn.disabled = false;
     const labels = predictions.map(p => p.className.toLowerCase()).join(' ');
 
